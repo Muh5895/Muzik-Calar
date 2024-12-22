@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -43,195 +44,15 @@
             100% { transform: translate(-100%, 0); }
         }
     </style>
-    <script>
-        let audio = new Audio();
-        let currentSong = null;
-        let songs = [];
-        let language = 'tr';
-
-        function updateTime() {
-            const now = new Date();
-            const options = { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' };
-            const timeString = now.toLocaleTimeString('tr-TR', options);
-            document.getElementById('time').textContent = timeString;
-        }
-        setInterval(updateTime, 1000);
-
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const songName = file.name;
-                const songElement = document.createElement('div');
-                songElement.className = 'song-item flex items-center bg-pink-400 rounded-lg p-2 mt-2 cursor-pointer';
-                songElement.innerHTML = `
-                    <i class="fas fa-music text-2xl"></i>
-                    <div class="ml-4 overflow-hidden">
-                        <div class="marquee"><span>${songName}</span></div>
-                        <span class="text-sm">Sanatçı</span>
-                    </div>
-                    <div class="delete-button" onclick="deleteSong(event, '${songName}')">
-                        <i class="fas fa-trash"></i>
-                    </div>
-                `;
-                songElement.onclick = () => playSong(file, songName);
-                document.getElementById('song-list').appendChild(songElement);
-                songs.push({ file, songName });
-                saveSongs();
-            }
-        }
-
-        function playSong(file, songName) {
-            const url = URL.createObjectURL(file);
-            audio.src = url;
-            audio.play();
-            currentSong = songName;
-            document.getElementById('player-song-name').innerHTML = `<div class="marquee"><span>${songName}</span></div>`;
-            document.getElementById('player-artist-name').textContent = 'Sanatçı';
-            document.getElementById('player').classList.remove('hidden');
-        }
-
-        function togglePlayPause() {
-            if (audio.paused) {
-                audio.play();
-                document.getElementById('play-pause-button').innerHTML = '<i class="fas fa-pause"></i>';
-            } else {
-                audio.pause();
-                document.getElementById('play-pause-button').innerHTML = '<i class="fas fa-play"></i>';
-            }
-        }
-
-        function toggleRepeat() {
-            audio.loop = !audio.loop;
-            document.getElementById('repeat-button').classList.toggle('text-blue-500', audio.loop);
-        }
-
-        function adjustVolume(event) {
-            audio.volume = event.target.value;
-        }
-
-        function toggleSettings() {
-            document.getElementById('settings').classList.toggle('hidden');
-        }
-
-        function changeTheme(theme) {
-            document.body.className = theme;
-            document.querySelectorAll('.text-white').forEach(element => {
-                element.classList.add('text-white');
-            });
-        }
-
-        function translatePage(lang) {
-            language = lang;
-            const translations = {
-                'tr': {
-                    'local_songs': 'Yerel şarkılar',
-                    'add_song': 'Şarkı Ekle',
-                    'settings': 'Ayarlar',
-                    'theme_select': 'Tema Seç',
-                    'light_theme': 'Açık Tema',
-                    'dark_theme': 'Koyu Tema',
-                    'translation': 'Çeviri',
-                    'english': 'İngilizce',
-                    'turkish': 'Türkçe',
-                    'artist': 'Sanatçı',
-                    'song_name': 'Şarkı Adı',
-                    'repeat': 'Tekrar',
-                    'volume': 'Ses'
-                },
-                'en': {
-                    'local_songs': 'Local Songs',
-                    'add_song': 'Add Song',
-                    'settings': 'Settings',
-                    'theme_select': 'Select Theme',
-                    'light_theme': 'Light Theme',
-                    'dark_theme': 'Dark Theme',
-                    'translation': 'Translation',
-                    'english': 'English',
-                    'turkish': 'Turkish',
-                    'artist': 'Artist',
-                    'song_name': 'Song Name',
-                    'repeat': 'Repeat',
-                    'volume': 'Volume'
-                }
-            };
-
-            document.getElementById('local_songs').textContent = translations[lang]['local_songs'];
-            document.getElementById('add_song').textContent = translations[lang]['add_song'];
-            document.getElementById('settings_button').textContent = translations[lang]['settings'];
-            document.getElementById('theme_select').textContent = translations[lang]['theme_select'];
-            document.getElementById('light_theme').textContent = translations[lang]['light_theme'];
-            document.getElementById('dark_theme').textContent = translations[lang]['dark_theme'];
-            document.getElementById('translation').textContent = translations[lang]['translation'];
-            document.getElementById('english').textContent = translations[lang]['english'];
-            document.getElementById('turkish').textContent = translations[lang]['turkish'];
-            document.getElementById('player-artist-name').textContent = translations[lang]['artist'];
-            document.getElementById('repeat_button').title = translations[lang]['repeat'];
-            document.getElementById('volume_label').textContent = translations[lang]['volume'];
-        }
-
-        function saveSongs() {
-            localStorage.setItem('songs', JSON.stringify(songs));
-        }
-
-        function loadSongs() {
-            const savedSongs = JSON.parse(localStorage.getItem('songs'));
-            if (savedSongs) {
-                songs = savedSongs;
-                songs.forEach(({ file, songName }) => {
-                    const songElement = document.createElement('div');
-                    songElement.className = 'song-item flex items-center bg-pink-400 rounded-lg p-2 mt-2 cursor-pointer';
-                    songElement.innerHTML = `
-                        <i class="fas fa-music text-2xl"></i>
-                        <div class="ml-4 overflow-hidden">
-                            <div class="marquee"><span>${songName}</span></div>
-                            <span class="text-sm">Sanatçı</span>
-                        </div>
-                        <div class="delete-button" onclick="deleteSong(event, '${songName}')">
-                            <i class="fas fa-trash"></i>
-                        </div>
-                    `;
-                    songElement.onclick = () => playSong(file, songName);
-                    document.getElementById('song-list').appendChild(songElement);
-                });
-            }
-        }
-
-        function deleteSong(event, songName) {
-            event.stopPropagation();
-            songs = songs.filter(song => song.songName !== songName);
-            saveSongs();
-            loadSongs();
-        }
-
-        window.onload = loadSongs;
-
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.song-item').forEach(item => {
-                let startX;
-                item.addEventListener('touchstart', (e) => {
-                    startX = e.touches[0].clientX;
-                });
-                item.addEventListener('touchmove', (e) => {
-                    const touch = e.touches[0];
-                    const change = startX - touch.clientX;
-                    if (change > 0) {
-                        item.classList.add('swiped');
-                    } else {
-                        item.classList.remove('swiped');
-                    }
-                });
-            });
-        });
-    </script>
 </head>
 <body class="bg-black text-white font-sans overflow-y-scroll">
     <div class="max-w-xs mx-auto p-4">
         <div class="flex justify-between items-center mb-4">
-            <h1 id="local_songs" class="text-lg">Yerel şarkılar</h1>
+            <h1 id="local_songs" class="text-lg">Yerel Şarkılar</h1>
             <span id="time" class="text-lg"></span>
         </div>
         <div id="song-list" class="space-y-2">
-            <!-- Songs will be added here -->
+            <!-- Şarkılar burada listelenecek -->
         </div>
         <div class="flex items-center bg-white text-black rounded-lg p-2 mt-4 cursor-pointer" onclick="document.getElementById('file-input').click()">
             <i class="fas fa-plus text-2xl"></i>
@@ -285,5 +106,105 @@
             </div>
         </div>
     </div>
+
+    <script>
+        let audio = new Audio();
+        let currentSong = null;
+        let songs = [];
+        let language = 'tr';
+
+        function updateTime() {
+            const now = new Date();
+            const options = { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' };
+            const timeString = now.toLocaleTimeString('tr-TR', options);
+            document.getElementById('time').textContent = timeString;
+        }
+        setInterval(updateTime, 1000);
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const songName = file.name;
+
+                // Kullanıcıdan sanatçı adı iste
+                const artistName = prompt("Sanatçı adını girin:", "Bilinmiyor");
+                const songElement = document.createElement('div');
+                songElement.className = 'song-item flex items-center bg-pink-400 rounded-lg p-2 mt-2 cursor-pointer';
+                songElement.innerHTML = `
+                    <i class="fas fa-music text-2xl"></i>
+                    <div class="ml-4 overflow-hidden">
+                        <div class="marquee"><span>${songName}</span></div>
+                        <span class="text-sm">${artistName}</span>
+                    </div>
+                    <div class="delete-button" onclick="deleteSong(event, '${songName}')">
+                        <i class="fas fa-trash"></i>
+                    </div>
+                `;
+                songElement.onclick = () => playSong(file, songName, artistName);
+                document.getElementById('song-list').appendChild(songElement);
+                songs.push({ file, songName, artistName });
+                saveSongs();
+            }
+        }
+
+        function playSong(file, songName, artistName = "Sanatçı") {
+            const url = URL.createObjectURL(file);
+            audio.src = url;
+            audio.play();
+            currentSong = songName;
+            document.getElementById('player-song-name').innerHTML = `<div class="marquee"><span>${songName}</span></div>`;
+            document.getElementById('player-artist-name').textContent = artistName;
+            document.getElementById('player').classList.remove('hidden');
+        }
+
+        function togglePlayPause() {
+            if (audio.paused) {
+                audio.play();
+                document.getElementById('play-pause-button').innerHTML = '<i class="fas fa-pause"></i>';
+            } else {
+                audio.pause();
+                document.getElementById('play-pause-button').innerHTML = '<i class="fas fa-play"></i>';
+            }
+        }
+
+        function deleteSong(event, songName) {
+            event.stopPropagation();
+            if (!confirm('Bu şarkıyı kalıcı olarak silmek istediğinize emin misiniz?')) {
+                return;
+            }
+            songs = songs.filter(song => song.songName !== songName);
+            saveSongs();
+            loadSongs();
+        }
+
+        function saveSongs() {
+            localStorage.setItem('songs', JSON.stringify(songs));
+        }
+
+        function loadSongs() {
+            const savedSongs = JSON.parse(localStorage.getItem('songs'));
+            if (savedSongs) {
+                songs = savedSongs;
+                songs.forEach(({ file, songName, artistName }) => {
+                    const songElement = document.createElement('div');
+                    songElement.className = 'song-item flex items-center bg-pink-400 rounded-lg p-2 mt-2 cursor-pointer';
+                    songElement.innerHTML = `
+                        <i class="fas fa-music text-2xl"></i>
+                        <div class="ml-4 overflow-hidden">
+                            <div class="marquee"><span>${songName}</span></div>
+                            <span class="text-sm">${artistName || "Sanatçı"}</span>
+                        </div>
+                        <div class="delete-button" onclick="deleteSong(event, '${songName}')">
+                            <i class="fas fa-trash"></i>
+                        </div>
+                    `;
+                    songElement.onclick = () => playSong(file, songName, artistName);
+                    document.getElementById('song-list').appendChild(songElement);
+                });
+            }
+        }
+
+        window.onload = loadSongs;
+    </script>
 </body>
 </html>
