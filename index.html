@@ -1,155 +1,193 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gelişmiş Müzik Çalar</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
-    <style>
-        .hidden { display: none; }
-        .marquee {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            animation: marquee 10s linear infinite;
-        }
-        @keyframes marquee {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
-        }
-    </style>
-</head>
-<body class="bg-gray-800 text-white min-h-screen flex flex-col items-center justify-center">
-    <!-- Başlık -->
-    <h1 class="text-2xl font-bold mb-4">Gelişmiş Müzik Çalar</h1>
-
-    <!-- Tema Değiştir -->
-    <button id="theme-toggle" class="mb-4 bg-gray-700 p-2 rounded">Temayı Değiştir</button>
-
-    <!-- Müzik Çalar -->
-    <div class="relative w-80 h-80 bg-gray-900 rounded-lg shadow-lg p-4">
-        <div class="text-center">
-            <h2 id="song-title" class="font-bold text-lg truncate">Çalan Şarkı Yok</h2>
-            <audio id="audio-player" class="hidden"></audio>
-        </div>
-
-        <div class="mt-4 flex justify-between items-center">
-            <button id="prev-button" class="text-xl"><i class="fas fa-backward"></i></button>
-            <button id="play-pause-button" class="text-3xl"><i class="fas fa-play-circle"></i></button>
-            <button id="next-button" class="text-xl"><i class="fas fa-forward"></i></button>
-        </div>
-
-        <div class="mt-4">
-            <input type="range" id="progress-bar" class="w-full" min="0" max="100" value="0">
-        </div>
-
-        <div class="mt-4 flex justify-between">
-            <button id="repeat-button" class="text-xl"><i class="fas fa-sync"></i></button>
-            <button id="volume-button" class="text-xl"><i class="fas fa-volume-up"></i></button>
-        </div>
-    </div>
-
-    <!-- Oynatma Listesi -->
-    <ul id="playlist" class="mt-4 bg-gray-700 w-80 rounded-lg p-4 list-none">
-        <li>Liste boş...</li>
-    </ul>
-
-    <!-- Ek Özellikler -->
-    <div class="mt-4 flex justify-around w-80">
-        <button id="add-song" class="bg-green-600 p-2 rounded">Şarkı Ekle</button>
-        <button id="favorites-button" class="bg-yellow-500 p-2 rounded">Favoriler</button>
-        <button id="clear-playlist" class="bg-red-600 p-2 rounded">Listeyi Temizle</button>
-    </div>
-
-    <input type="file" id="file-input" accept="audio/*" class="hidden">
-
-    <!-- Script -->
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Müzik Çalar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
     <script>
-        const audioPlayer = document.getElementById('audio-player');
-        const playPauseButton = document.getElementById('play-pause-button');
-        const progressBar = document.getElementById('progress-bar');
-        const repeatButton = document.getElementById('repeat-button');
-        const volumeButton = document.getElementById('volume-button');
-        const addSongButton = document.getElementById('add-song');
-        const playlist = document.getElementById('playlist');
-        const fileInput = document.getElementById('file-input');
-        const clearPlaylistButton = document.getElementById('clear-playlist');
-        const themeToggle = document.getElementById('theme-toggle');
-        const favoritesButton = document.getElementById('favorites-button');
+        document.addEventListener('DOMContentLoaded', function () {
+            const repeatButton = document.getElementById('repeat-button');
+            const volumeButton = document.getElementById('volume-button');
+            const addButton = document.getElementById('add-button');
+            const currentTime = document.getElementById('current-time');
+            const songTitle = document.getElementById('song-title');
+            const volumePopup = document.getElementById('volume-popup');
+            const fileInput = document.getElementById('file-input');
+            const playlist = document.getElementById('playlist');
+            const playPauseButton = document.getElementById('play-pause-button');
+            const audioPlayer = document.getElementById('audio-player');
+            const internetStatus = document.getElementById('internet-status');
+            const progressBar = document.getElementById('progress-bar');
+            const volumeControl = document.getElementById('volume-control');
+            let isPlaying = false;
 
-        let isPlaying = false;
-        let isLooping = false;
-        let currentVolume = 0.5;
-        let playlistData = [];
-
-        // Şarkıyı Çal/Duraklat
-        playPauseButton.addEventListener('click', () => {
-            if (isPlaying) {
-                audioPlayer.pause();
-                playPauseButton.innerHTML = '<i class="fas fa-play-circle"></i>';
-            } else {
-                audioPlayer.play();
-                playPauseButton.innerHTML = '<i class="fas fa-pause-circle"></i>';
+            // Set Istanbul time
+            function updateTime() {
+                const now = new Date();
+                const options = { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' };
+                const timeString = now.toLocaleTimeString('en-GB', options);
+                currentTime.textContent = timeString;
             }
-            isPlaying = !isPlaying;
-        });
+            updateTime();
+            setInterval(updateTime, 60000);
 
-        // Ses Düzeyini Ayarla
-        volumeButton.addEventListener('click', () => {
-            currentVolume = currentVolume === 0 ? 0.5 : 0;
-            audioPlayer.volume = currentVolume;
-        });
-
-        // Şarkı Tekrar Modu
-        repeatButton.addEventListener('click', () => {
-            isLooping = !isLooping;
-            audioPlayer.loop = isLooping;
-            repeatButton.classList.toggle('text-green-500');
-        });
-
-        // Şarkı Ekle
-        addSongButton.addEventListener('click', () => {
-            fileInput.click();
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const songName = file.name;
-                const listItem = document.createElement('li');
-                listItem.className = 'p-2 hover:bg-gray-600 flex justify-between items-center';
-                listItem.innerHTML = `
-                    <span>${songName}</span>
-                    <button class="remove-song text-red-500"><i class="fas fa-trash"></i></button>
-                `;
-                playlist.appendChild(listItem);
-                playlistData.push({ name: songName, file });
-                listItem.querySelector('.remove-song').addEventListener('click', () => {
-                    playlistData = playlistData.filter((item) => item.file !== file);
-                    listItem.remove();
-                });
+            // Check internet connection
+            function updateInternetStatus() {
+                if (navigator.onLine) {
+                    internetStatus.classList.add('hidden');
+                } else {
+                    internetStatus.classList.remove('hidden');
+                }
             }
-        });
+            updateInternetStatus();
+            window.addEventListener('online', updateInternetStatus);
+            window.addEventListener('offline', updateInternetStatus);
 
-        // Tema Değiştir
-        themeToggle.addEventListener('click', () => {
-            document.body.classList.toggle('bg-gray-800');
-            document.body.classList.toggle('bg-white');
-            document.body.classList.toggle('text-white');
-            document.body.classList.toggle('text-black');
-        });
+            // Toggle repeat
+            repeatButton.addEventListener('click', function () {
+                audioPlayer.loop = !audioPlayer.loop;
+                this.classList.toggle('text-green-500');
+            });
 
-        // Listeyi Temizle
-        clearPlaylistButton.addEventListener('click', () => {
-            playlist.innerHTML = '<li>Liste boş...</li>';
-            playlistData = [];
-        });
+            // Show volume control
+            volumeButton.addEventListener('click', function () {
+                volumePopup.classList.remove('hidden');
+            });
 
-        // Favoriler
-        favoritesButton.addEventListener('click', () => {
-            alert('Favoriler özelliği yapım aşamasında.');
+            // Close volume control
+            document.getElementById('close-volume-popup').addEventListener('click', function () {
+                volumePopup.classList.add('hidden');
+            });
+
+            // Adjust volume
+            volumeControl.addEventListener('input', function () {
+                audioPlayer.volume = this.value / 100;
+            });
+
+            // Show file input
+            addButton.addEventListener('click', function () {
+                fileInput.click();
+            });
+
+            // Add music to playlist
+            fileInput.addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const listItem = document.createElement('li');
+                    listItem.classList.add('flex', 'justify-between', 'items-center', 'cursor-pointer', 'hover:bg-gray-200', 'p-2');
+                    const songName = document.createElement('span');
+                    songName.textContent = file.name;
+
+                    const deleteButton = document.createElement('button');
+                    deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+                    deleteButton.classList.add('text-red-500', 'ml-2');
+                    deleteButton.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        listItem.remove();
+                    });
+                    listItem.appendChild(songName);
+                    listItem.appendChild(deleteButton);
+                    listItem.addEventListener('click', function () {
+                        songTitle.textContent = file.name;
+                        audioPlayer.src = URL.createObjectURL(file);
+                        audioPlayer.play();
+                        isPlaying = true;
+                        playPauseButton.innerHTML = '<i class="fas fa-pause-circle"></i>';
+                    });
+                    playlist.appendChild(listItem);
+                }
+            });
+
+            // Play/Pause button
+            playPauseButton.addEventListener('click', function () {
+                if (isPlaying) {
+                    audioPlayer.pause();
+                    playPauseButton.innerHTML = '<i class="fas fa-play-circle"></i>';
+                } else {
+                    audioPlayer.play();
+                    playPauseButton.innerHTML = '<i class="fas fa-pause-circle"></i>';
+                }
+                isPlaying = !isPlaying;
+            });
+
+            // Update progress bar
+            audioPlayer.addEventListener('timeupdate', function () {
+                const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+                progressBar.value = progress;
+            });
+
+            // Seek in the audio
+            progressBar.addEventListener('input', function () {
+                const seekTime = (progressBar.value / 100) * audioPlayer.duration;
+                audioPlayer.currentTime = seekTime;
+            });
+
+            // Clear playlist on page reload
+            function clearPlaylist() {
+                localStorage.removeItem('playlist');
+            }
+            clearPlaylist();
         });
     </script>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen bg-gray-200">
+    <div id="internet-status" class="absolute top-0 left-0 right-0 bg-red-500 text-white text-center p-2 hidden">
+        İnternet bağlantısı yok
+    </div>
+    <div class="relative w-80 h-80 bg-black rounded-3xl overflow-hidden mb-4">
+        <img alt="Tropical beach background" class="absolute inset-0 w-full h-full object-cover opacity-70" height="320" src="https://storage.googleapis.com/a1aa/image/KmbPeMWBBgWgEKqPm2yOBIHutT8IgGQ5drfJky5RRxSPrf6nA.jpg" width="320"/>
+        <div class="absolute inset-0 flex flex-col items-center justify-center text-white">
+            <div class="absolute top-4 left-4 text-sm">Yerel müzik</div>
+            <div class="absolute top-4 right-4 text-sm" id="current-time"></div>
+            <div class="text-center mt-16">
+                <div class="text-xl font-bold" id="song-title">Çalan müzik yok</div>
+            </div>
+            <div class="flex items-center justify-center mt-8">
+                <button class="text-3xl mx-4">
+                    <i class="fas fa-backward"></i>
+                </button>
+                <button class="text-5xl mx-4" id="play-pause-button">
+                    <i class="fas fa-play-circle"></i>
+                </button>
+                <button class="text-3xl mx-4">
+                    <i class="fas fa-forward"></i>
+                </button>
+            </div>
+            <div class="w-full mt-4 px-4">
+                <input type="range" id="progress-bar" class="w-full" min="0" max="100" value="0">
+            </div>
+            <div class="absolute bottom-4 left-4 text-xl">
+                <i class="fas fa-sync-alt" id="repeat-button"></i>
+            </div>
+            <div class="absolute bottom-4 right-4 text-xl">
+                <i class="fas fa-plus" id="add-button"></i>
+            </div>
+            <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-xl">
+                <i class="fas fa-volume-up" id="volume-button"></i>
+            </div>
+        </div>
+    </div>
+
+    <ul id="playlist" class="bg-white w-80 rounded-3xl p-4 list-none">
+        <!-- Playlist items will be added here -->
+    </ul>
+
+    <!-- Volume Popup -->
+    <div id="volume-popup" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white p-4 rounded-lg">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold">Ses Düzeyi</h2>
+                <button id="close-volume-popup" class="text-red-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <input type="range" id="volume-control" class="w-full" min="0" max="100" value="50">
+        </div>
+    </div>
+
+    <!-- Add Music Input -->
+    <input type="file" id="file-input" accept="audio/*" class="hidden"/>
+    <audio id="audio-player" class="hidden"></audio>
 </body>
 </html>
