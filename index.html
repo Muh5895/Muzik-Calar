@@ -1,0 +1,249 @@
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Music Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const repeatButton = document.getElementById('repeat-button');
+            const volumeButton = document.getElementById('volume-button');
+            const addButton = document.getElementById('add-button');
+            const currentTime = document.getElementById('current-time');
+            const songTitle = document.getElementById('song-title');
+            const volumePopup = document.getElementById('volume-popup');
+            const fileInput = document.getElementById('file-input');
+            const playlist = document.getElementById('playlist');
+            const playPauseButton = document.getElementById('play-pause-button');
+            const audioPlayer = document.getElementById('audio-player');
+            const internetStatus = document.getElementById('internet-status');
+            const progressBar = document.getElementById('progress-bar');
+            const volumeControl = document.getElementById('volume-control');
+            let isPlaying = false;
+
+            // Set Istanbul time
+            function updateTime() {
+                const now = new Date();
+                const options = { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' };
+                const timeString = now.toLocaleTimeString('en-GB', options);
+                currentTime.textContent = timeString;
+            }
+            updateTime();
+            setInterval(updateTime, 60000);
+
+            // Check internet connection
+            function updateInternetStatus() {
+                if (navigator.onLine) {
+                    internetStatus.classList.add('hidden');
+                } else {
+                    internetStatus.classList.remove('hidden');
+                }
+            }
+            updateInternetStatus();
+            window.addEventListener('online', updateInternetStatus);
+            window.addEventListener('offline', updateInternetStatus);
+
+            // Toggle repeat
+            repeatButton.addEventListener('click', function () {
+                audioPlayer.loop = !audioPlayer.loop;
+                this.classList.toggle('text-green-500');
+            });
+
+            // Show volume control
+            volumeButton.addEventListener('click', function () {
+                volumePopup.classList.remove('hidden');
+            });
+
+            // Close volume control
+            document.getElementById('close-volume-popup').addEventListener('click', function () {
+                volumePopup.classList.add('hidden');
+            });
+
+            // Adjust volume
+            volumeControl.addEventListener('input', function () {
+                audioPlayer.volume = this.value / 100;
+            });
+
+            // Show file input
+            addButton.addEventListener('click', function () {
+                fileInput.click();
+            });
+
+            // Add music to playlist
+            fileInput.addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const listItem = document.createElement('li');
+                    listItem.classList.add('flex', 'justify-between', 'items-center', 'cursor-pointer', 'hover:bg-gray-200', 'p-2');
+                    const songName = document.createElement('span');
+                    songName.textContent = file.name;
+                    if (file.name.length > 20) {
+                        songName.classList.add('marquee');
+                    }
+                    const deleteButton = document.createElement('button');
+                    deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+                    deleteButton.classList.add('text-red-500', 'ml-2');
+                    deleteButton.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        listItem.remove();
+                        savePlaylist();
+                    });
+                    listItem.appendChild(songName);
+                    listItem.appendChild(deleteButton);
+                    listItem.addEventListener('click', function () {
+                        songTitle.textContent = file.name;
+                        audioPlayer.src = URL.createObjectURL(file);
+                        audioPlayer.play();
+                        isPlaying = true;
+                        playPauseButton.innerHTML = '<i class="fas fa-pause-circle"></i>';
+                    });
+                    playlist.appendChild(listItem);
+                    savePlaylist();
+                }
+            });
+
+            // Play/Pause button
+            playPauseButton.addEventListener('click', function () {
+                if (isPlaying) {
+                    audioPlayer.pause();
+                    playPauseButton.innerHTML = '<i class="fas fa-play-circle"></i>';
+                } else {
+                    audioPlayer.play();
+                    playPauseButton.innerHTML = '<i class="fas fa-pause-circle"></i>';
+                }
+                isPlaying = !isPlaying;
+            });
+
+            // Update progress bar
+            audioPlayer.addEventListener('timeupdate', function () {
+                const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+                progressBar.value = progress;
+            });
+
+            // Seek in the audio
+            progressBar.addEventListener('input', function () {
+                const seekTime = (progressBar.value / 100) * audioPlayer.duration;
+                audioPlayer.currentTime = seekTime;
+            });
+
+            // Save playlist to localStorage
+            function savePlaylist() {
+                const songs = [];
+                playlist.querySelectorAll('li').forEach(item => {
+                    songs.push(item.querySelector('span').textContent);
+                });
+                localStorage.setItem('playlist', JSON.stringify(songs));
+            }
+
+            // Load playlist from localStorage
+            function loadPlaylist() {
+                const songs = JSON.parse(localStorage.getItem('playlist')) || [];
+                songs.forEach(song => {
+                    const listItem = document.createElement('li');
+                    listItem.classList.add('flex', 'justify-between', 'items-center', 'cursor-pointer', 'hover:bg-gray-200', 'p-2');
+                    const songName = document.createElement('span');
+                    songName.textContent = song;
+                    if (song.length > 20) {
+                        songName.classList.add('marquee');
+                    }
+                    const deleteButton = document.createElement('button');
+                    deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+                    deleteButton.classList.add('text-red-500', 'ml-2');
+                    deleteButton.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        listItem.remove();
+                        savePlaylist();
+                    });
+                    listItem.appendChild(songName);
+                    listItem.appendChild(deleteButton);
+                    listItem.addEventListener('click', function () {
+                        songTitle.textContent = song;
+                        // Assuming the song file is available in the same directory
+                        audioPlayer.src = song;
+                        audioPlayer.play();
+                        isPlaying = true;
+                        playPauseButton.innerHTML = '<i class="fas fa-pause-circle"></i>';
+                    });
+                    playlist.appendChild(listItem);
+                });
+            }
+
+            loadPlaylist();
+        });
+    </script>
+    <style>
+        .marquee {
+            display: inline-block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            animation: marquee 10s linear infinite;
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen bg-gray-200">
+    <div id="internet-status" class="absolute top-0 left-0 right-0 bg-red-500 text-white text-center p-2 hidden">
+        İnternet bağlantısı yok
+    </div>
+    <div class="relative w-80 h-80 bg-black rounded-3xl overflow-hidden mb-4">
+        <img alt="Tropical beach background" class="absolute inset-0 w-full h-full object-cover opacity-70" height="320" src="https://storage.googleapis.com/a1aa/image/KmbPeMWBBgWgEKqPm2yOBIHutT8IgGQ5drfJky5RRxSPrf6nA.jpg" width="320"/>
+        <div class="absolute inset-0 flex flex-col items-center justify-center text-white">
+            <div class="absolute top-4 left-4 text-sm">Yerel müzik</div>
+            <div class="absolute top-4 right-4 text-sm" id="current-time"></div>
+            <div class="text-center mt-16">
+                <div class="text-xl font-bold" id="song-title">Çalan müzik yok</div>
+            </div>
+            <div class="flex items-center justify-center mt-8">
+                <button class="text-3xl mx-4">
+                    <i class="fas fa-backward"></i>
+                </button>
+                <button class="text-5xl mx-4" id="play-pause-button">
+                    <i class="fas fa-play-circle"></i>
+                </button>
+                <button class="text-3xl mx-4">
+                    <i class="fas fa-forward"></i>
+                </button>
+            </div>
+            <div class="w-full mt-4 px-4">
+                <input type="range" id="progress-bar" class="w-full" min="0" max="100" value="0">
+            </div>
+            <div class="absolute bottom-4 left-4 text-xl">
+                <i class="fas fa-sync-alt" id="repeat-button"></i>
+            </div>
+            <div class="absolute bottom-4 right-4 text-xl">
+                <i class="fas fa-plus" id="add-button"></i>
+            </div>
+            <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-xl">
+                <i class="fas fa-volume-up" id="volume-button"></i>
+            </div>
+        </div>
+    </div>
+
+    <ul id="playlist" class="bg-white w-80 rounded-3xl p-4 list-none">
+        <!-- Playlist items will be added here -->
+    </ul>
+
+    <!-- Volume Popup -->
+    <div id="volume-popup" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white p-4 rounded-lg">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold">Ses Düzeyi</h2>
+                <button id="close-volume-popup" class="text-red-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <input type="range" id="volume-control" class="w-full" min="0" max="100" value="50">
+        </div>
+    </div>
+
+    <!-- Add Music Input -->
+    <input type="file" id="file-input" accept="audio/*" class="hidden"/>
+    <audio id="audio-player" class="hidden"></audio>
+</body>
+</html>
