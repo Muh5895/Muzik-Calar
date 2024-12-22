@@ -78,16 +78,13 @@
                     listItem.classList.add('flex', 'justify-between', 'items-center', 'cursor-pointer', 'hover:bg-gray-200', 'p-2');
                     const songName = document.createElement('span');
                     songName.textContent = file.name;
-                    if (file.name.length > 20) {
-                        songName.classList.add('marquee');
-                    }
+
                     const deleteButton = document.createElement('button');
                     deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
                     deleteButton.classList.add('text-red-500', 'ml-2');
                     deleteButton.addEventListener('click', function (e) {
                         e.stopPropagation();
                         listItem.remove();
-                        savePlaylist();
                     });
                     listItem.appendChild(songName);
                     listItem.appendChild(deleteButton);
@@ -99,7 +96,6 @@
                         playPauseButton.innerHTML = '<i class="fas fa-pause-circle"></i>';
                     });
                     playlist.appendChild(listItem);
-                    savePlaylist();
                 }
             });
 
@@ -127,65 +123,13 @@
                 audioPlayer.currentTime = seekTime;
             });
 
-            // Save playlist to localStorage
-            function savePlaylist() {
-                const songs = [];
-                playlist.querySelectorAll('li').forEach(item => {
-                    songs.push(item.querySelector('span').textContent);
-                });
-                localStorage.setItem('playlist', JSON.stringify(songs));
+            // Clear playlist on page reload
+            function clearPlaylist() {
+                localStorage.removeItem('playlist');
             }
-
-            // Load playlist from localStorage
-            function loadPlaylist() {
-                const songs = JSON.parse(localStorage.getItem('playlist')) || [];
-                songs.forEach(song => {
-                    const listItem = document.createElement('li');
-                    listItem.classList.add('flex', 'justify-between', 'items-center', 'cursor-pointer', 'hover:bg-gray-200', 'p-2');
-                    const songName = document.createElement('span');
-                    songName.textContent = song;
-                    if (song.length > 20) {
-                        songName.classList.add('marquee');
-                    }
-                    const deleteButton = document.createElement('button');
-                    deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
-                    deleteButton.classList.add('text-red-500', 'ml-2');
-                    deleteButton.addEventListener('click', function (e) {
-                        e.stopPropagation();
-                        listItem.remove();
-                        savePlaylist();
-                    });
-                    listItem.appendChild(songName);
-                    listItem.appendChild(deleteButton);
-                    listItem.addEventListener('click', function () {
-                        songTitle.textContent = song;
-                        // Assuming the song file is available in the same directory
-                        audioPlayer.src = song;
-                        audioPlayer.play();
-                        isPlaying = true;
-                        playPauseButton.innerHTML = '<i class="fas fa-pause-circle"></i>';
-                    });
-                    playlist.appendChild(listItem);
-                });
-            }
-
-            loadPlaylist();
+            clearPlaylist();
         });
     </script>
-    <style>
-        .marquee {
-            display: inline-block;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            animation: marquee 10s linear infinite;
-        }
-
-        @keyframes marquee {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
-        }
-    </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen bg-gray-200">
     <div id="internet-status" class="absolute top-0 left-0 right-0 bg-red-500 text-white text-center p-2 hidden">
