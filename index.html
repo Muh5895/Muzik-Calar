@@ -7,7 +7,30 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const repeatButton = document.getElementById('repeat-button');
+            const volumeButton = document.getElementById('volume-button');
+            const addButton = document.getElementById('add-button');
+            const currentTime = document.getElementById('current-time');
+            const songTitle = document.getElementById('song-title');
+            const volumePopup = document.getElementById('volume-popup');
+            const fileInput = document.getElementById('file-input');
+            const playlist = document.getElementById('playlist');
+            const playPauseButton = document.getElementById('play-pause-button');
+            const audioPlayer = document.getElementById('audio-player');
             const internetStatus = document.getElementById('internet-status');
+            const progressBar = document.getElementById('progress-bar');
+            const volumeControl = document.getElementById('volume-control');
+            let isPlaying = false;
+
+            // Set Istanbul time
+            function updateTime() {
+                const now = new Date();
+                const options = { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' };
+                const timeString = now.toLocaleTimeString('en-GB', options);
+                currentTime.textContent = timeString;
+            }
+            updateTime();
+            setInterval(updateTime, 60000);
 
             // Check internet connection
             function updateInternetStatus() {
@@ -20,16 +43,102 @@
             updateInternetStatus();
             window.addEventListener('online', updateInternetStatus);
             window.addEventListener('offline', updateInternetStatus);
+
+            // Toggle repeat
+            repeatButton.addEventListener('click', function () {
+                audioPlayer.loop = !audioPlayer.loop;
+                this.classList.toggle('text-green-500');
+            });
+
+            // Show volume control
+            volumeButton.addEventListener('click', function () {
+                volumePopup.classList.remove('hidden');
+            });
+
+            // Close volume control
+            document.getElementById('close-volume-popup').addEventListener('click', function () {
+                volumePopup.classList.add('hidden');
+            });
+
+            // Adjust volume
+            volumeControl.addEventListener('input', function () {
+                audioPlayer.volume = this.value / 100;
+            });
+
+            // Show file input
+            addButton.addEventListener('click', function () {
+                fileInput.click();
+            });
+
+            // Add music to playlist
+            fileInput.addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const listItem = document.createElement('li');
+                    listItem.classList.add('flex', 'justify-between', 'items-center', 'cursor-pointer', 'hover:bg-gray-200', 'p-2');
+                    const songName = document.createElement('span');
+                    songName.textContent = file.name;
+
+                    const deleteButton = document.createElement('button');
+                    deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+                    deleteButton.classList.add('text-red-500', 'ml-2');
+                    deleteButton.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        listItem.remove();
+                    });
+                    listItem.appendChild(songName);
+                    listItem.appendChild(deleteButton);
+                    listItem.addEventListener('click', function () {
+                        songTitle.textContent = file.name;
+                        audioPlayer.src = URL.createObjectURL(file);
+                        audioPlayer.play();
+                        isPlaying = true;
+                        playPauseButton.innerHTML = '<i class="fas fa-pause-circle"></i>';
+                    });
+                    playlist.appendChild(listItem);
+                }
+            });
+
+            // Play/Pause button
+            playPauseButton.addEventListener('click', function () {
+                if (isPlaying) {
+                    audioPlayer.pause();
+                    playPauseButton.innerHTML = '<i class="fas fa-play-circle"></i>';
+                } else {
+                    audioPlayer.play();
+                    playPauseButton.innerHTML = '<i class="fas fa-pause-circle"></i>';
+                }
+                isPlaying = !isPlaying;
+            });
+
+            // Update progress bar
+            audioPlayer.addEventListener('timeupdate', function () {
+                const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+                progressBar.value = progress;
+            });
+
+            // Seek in the audio
+            progressBar.addEventListener('input', function () {
+                const seekTime = (progressBar.value / 100) * audioPlayer.duration;
+                audioPlayer.currentTime = seekTime;
+            });
+
+            // Clear playlist on page reload
+            function clearPlaylist() {
+                localStorage.removeItem('playlist');
+            }
+            clearPlaylist();
         });
     </script>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen bg-gray-200">
-    <div id="internet-status" class="absolute top-16 bg-red-500 text-white text-center px-4 py-2 rounded-lg shadow-lg hidden">
+    <div id="internet-status" class="absolute top-0 left-0 right-0 bg-red-500 text-white text-center p-2 hidden">
         İnternet bağlantısı yok
     </div>
     <div class="relative w-80 h-80 bg-black rounded-3xl overflow-hidden mb-4">
         <img alt="Tropical beach background" class="absolute inset-0 w-full h-full object-cover opacity-70" height="320" src="https://storage.googleapis.com/a1aa/image/KmbPeMWBBgWgEKqPm2yOBIHutT8IgGQ5drfJky5RRxSPrf6nA.jpg" width="320"/>
         <div class="absolute inset-0 flex flex-col items-center justify-center text-white">
+            <div class="absolute top-4 left-4 text-sm">Yerel müzik</div>
             <div class="absolute top-4 right-4 text-sm" id="current-time"></div>
             <div class="text-center mt-16">
                 <div class="text-xl font-bold" id="song-title">Çalan müzik yok</div>
@@ -81,4 +190,4 @@
     <input type="file" id="file-input" accept="audio/*" class="hidden"/>
     <audio id="audio-player" class="hidden"></audio>
 </body>
-</html>
+    </html>
