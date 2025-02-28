@@ -4,161 +4,1295 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NeoTrack Kontrol Paneli</title>
-  <!-- FontAwesome CDN ile ikonlar yüklendi -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-pyFv8FvVH9OKOj8FA+IbuSytfEknQn+U4UyxjaG1K5hsEm7h64EmNUC5vY/vPEn+GjfZs2b1Kxn90JPX47+6dw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     body {
-      font-family: Arial, sans-serif;
-      background-color: #000;
-      color: white;
-      text-align: center;
-      padding: 20px;
+      font-family: 'Inter', sans-serif;
     }
-    .container {
-      width: 300px;
-      margin: auto;
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
-    .user-box {
-      display: flex;
-      align-items: center;
-      background: white;
-      color: black;
-      padding: 10px;
-      border-radius: 10px;
-      font-weight: bold;
-    }
-    .user-box img {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      margin-right: 10px;
-    }
-    .menu {
-      margin-top: 20px;
-    }
-    .menu button {
-      width: 100%;
-      background: black;
-      color: white;
-      border: none;
-      padding: 15px;
-      margin: 5px 0;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      font-size: 16px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-    .menu button i {
-      margin-right: 10px;
-      font-size: 20px;
-      width: 30px;
-      text-align: center;
-    }
-    .menu button:hover {
-      background: #333;
-    }
-    .bottom-menu {
-      display: flex;
-      justify-content: space-around;
-      margin-top: 20px;
-      padding: 10px;
-      background: white;
-      border-radius: 10px;
-    }
-    .bottom-menu i {
-      font-size: 24px;
-      cursor: pointer;
-      color: #000;
-    }
-    /* iframe kapsayıcısı */
-    #iframeContainer {
-      margin-top: 20px;
+    .modal {
       display: none;
-    }
-    #iframeContainer iframe {
+      position: fixed;
+      top: 0;
+      left: 0;
       width: 100%;
-      height: 400px;
-      border: none;
-      border-radius: 10px;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(5px);
     }
-    #closeFrame {
-      display: block;
-      margin: 10px auto;
-      padding: 10px 20px;
-      background: red;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      color: white;
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: modalFade 0.3s ease-out;
+    }
+    @keyframes modalFade {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .control-button {
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .control-button:active {
+      transform: scale(0.95);
+    }
+    .speed-gauge {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, #06b6d4 var(--speed), #1e293b 0deg);
+      position: relative;
+    }
+    .speed-gauge::before {
+      content: '';
+      position: absolute;
+      inset: 10px;
+      background: #0f172a;
+      border-radius: 50%;
+    }
+    .drive-mode-button {
+      transition: all 0.3s ease;
+    }
+    .drive-mode-button.active {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    .weather-alert {
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.6; }
+      100% { opacity: 1; }
+    }
+    .speed-warning {
+      animation: warning-flash 0.5s infinite;
+    }
+    @keyframes warning-flash {
+      0% { background-color: rgba(239, 68, 68, 0.2); }
+      50% { background-color: rgba(239, 68, 68, 0.4); }
+      100% { background-color: rgba(239, 68, 68, 0.2); }
+    }
+    /* Mobil cihazlar için ek responsive ayarlar */
+    @media (max-width: 640px) {
+      .container { padding: 1rem; }
+      header { padding: 1rem; }
+      h1 { font-size: 2rem; }
+      /* Modallerde kenar boşluklarını korumak için */
+      .modal > .glass-effect { margin: 0 1rem; padding: 1rem; }
     }
   </style>
 </head>
-<body>
-  <div class="container">
-    <div class="user-box">
-      <img src="https://via.placeholder.com/30" alt="User Icon">
-      <span>Merhaba, Kullanıcı</span>
+<body class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen text-white">
+  <div class="container mx-auto p-4 md:p-8">
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row justify-between items-center mb-8 glass-effect rounded-2xl p-6">
+      <div class="flex flex-col">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="bg-cyan-500/20 p-3 rounded-xl">
+            <i data-lucide="cpu" class="text-cyan-400 w-8 h-8"></i>
+          </div>
+          <h1 class="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+            NeoTrack Kontrol Paneli
+          </h1>
+        </div>
+        <div id="routeInfo" class="text-sm text-gray-300"></div>
+      </div>
+      <div class="flex items-center gap-6">
+        <div id="weatherStatus" class="flex items-center gap-2 bg-blue-500/10 px-4 py-2 rounded-full">
+          <i data-lucide="cloud-sun" class="text-yellow-400"></i>
+          <span id="temperature" class="text-sm font-medium">25°C</span>
+        </div>
+        <div id="roadStatus" class="flex items-center gap-2 bg-green-500/10 px-4 py-2 rounded-full">
+          <i data-lucide="road" class="text-green-400"></i>
+          <span id="roadCondition" class="text-sm font-medium">Normal</span>
+        </div>
+        <div class="flex items-center gap-2 bg-green-500/10 px-4 py-2 rounded-full">
+          <i data-lucide="sun" class="text-yellow-400"></i>
+          <span id="solarStatus" class="text-sm font-medium">Solar Panel Aktif</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Uyarı Bölümü -->
+    <div id="speedWarning" class="hidden mb-4 bg-red-500/20 p-4 rounded-xl speed-warning"></div>
+    <div id="weatherWarning" class="hidden mb-4 bg-yellow-500/20 p-4 rounded-xl weather-alert">
+      <div class="flex items-center justify-center gap-3">
+        <i data-lucide="alert-circle" class="text-yellow-400 w-6 h-6"></i>
+        <span id="weatherWarningText" class="text-yellow-400 font-semibold"></span>
+      </div>
     </div>
 
-    <div class="menu">
-      <button onclick="loadFeature('kontrol')">
-        <i class="fas fa-tv"></i>
-        Kontrol Özellikleri
-      </button>
-      <button onclick="loadFeature('sistem')">
-        <i class="fas fa-cogs"></i>
-        Sistem Özellikleri
-      </button>
-      <button onclick="loadFeature('ek')">
-        <i class="fas fa-plus-square"></i>
-        Ek Özellikler
-      </button>
-      <button onclick="loadFeature('gelismis')">
-        <i class="fas fa-rocket"></i>
-        Gelişmiş Özellikler
-      </button>
-      <button onclick="loadFeature('durum')">
-        <i class="fas fa-info-circle"></i>
+    <!-- Buton Kategorileri -->
+    <!-- Kategori 1: Kontrol Özellikleri -->
+    <div class="mb-6">
+      <h2 class="text-xl font-bold mb-4">Kontrol Özellikleri</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div onclick="playButtonSound(); openModal('voice');" class="glass-effect p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="bg-purple-500/20 p-3 rounded-xl group-hover:bg-purple-500/30 transition-colors">
+              <i data-lucide="mic" class="text-purple-400 w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-semibold">Sesli Kontrol</h3>
+          </div>
+          <p class="text-sm text-gray-400">Sesli komutlarla aracı kontrol edin</p>
+        </div>
+        <div onclick="playButtonSound(); openModal('remote');" class="glass-effect p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="bg-cyan-500/20 p-3 rounded-xl group-hover:bg-cyan-500/30 transition-colors">
+              <i data-lucide="radio" class="text-cyan-400 w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-semibold">Uzaktan Kumanda</h3>
+          </div>
+          <p class="text-sm text-gray-400">Manuel kontrol ve ayarlar</p>
+        </div>
+        <div onclick="playButtonSound(); openModal('tracking');" class="glass-effect p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="bg-green-500/20 p-3 rounded-xl group-hover:bg-green-500/30 transition-colors">
+              <i data-lucide="navigation-2" class="text-green-400 w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-semibold">Şerit Takip</h3>
+          </div>
+          <p class="text-sm text-gray-400">Canlı kamera görüntüsüyle şerit takip</p>
+        </div>
+        <div onclick="playButtonSound(); openModal('music');" class="glass-effect p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="bg-pink-500/20 p-3 rounded-xl group-hover:bg-pink-500/30 transition-colors">
+              <i data-lucide="music" class="text-pink-400 w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-semibold">Müzik Çalar</h3>
+          </div>
+          <p class="text-sm text-gray-400">Müziğinizi kontrol edin</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kategori 2: Sistem Özellikleri -->
+    <div class="mb-6">
+      <h2 class="text-xl font-bold mb-4">Sistem Özellikleri</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div onclick="playButtonSound(); openModal('ai');" class="glass-effect p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="bg-yellow-500/20 p-3 rounded-xl group-hover:bg-yellow-500/30 transition-colors">
+              <i data-lucide="robot" class="text-yellow-400 w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-semibold">AI Sürüş</h3>
+          </div>
+          <p class="text-sm text-gray-400">Yapay zeka ile sürüş desteği</p>
+        </div>
+        <div onclick="playButtonSound(); openModal('aiPark');" class="glass-effect p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="bg-blue-500/20 p-3 rounded-xl group-hover:bg-blue-500/30 transition-colors">
+              <i data-lucide="map-pin" class="text-blue-400 w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-semibold">AI Park</h3>
+          </div>
+          <p class="text-sm text-gray-400">Otonom park yardımcısı</p>
+        </div>
+        <div onclick="playButtonSound(); openModal('rota');" class="glass-effect p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="bg-indigo-500/20 p-3 rounded-xl group-hover:bg-indigo-500/30 transition-colors">
+              <i data-lucide="map" class="text-indigo-400 w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-semibold">Rota Planlayıcı</h3>
+          </div>
+          <p class="text-sm text-gray-400">Hedef belirleyin, rota oluşturun</p>
+        </div>
+        <div onclick="playButtonSound(); openModal('report');" class="glass-effect p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="bg-teal-500/20 p-3 rounded-xl group-hover:bg-teal-500/30 transition-colors">
+              <i data-lucide="file-text" class="text-teal-400 w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-semibold">Araç Durum Raporu</h3>
+          </div>
+          <p class="text-sm text-gray-400">Detaylı sistem raporu</p>
+        </div>
+        <div onclick="playButtonSound(); openModal('history');" class="glass-effect p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="bg-orange-500/20 p-3 rounded-xl group-hover:bg-orange-500/30 transition-colors">
+              <i data-lucide="clock" class="text-orange-400 w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-semibold">Sürüş Geçmişi</h3>
+          </div>
+          <p class="text-sm text-gray-400">Geçmiş sürüş kayıtlarınız</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kategori 3: Ek Özellikler -->
+    <div class="mb-6">
+      <h2 class="text-xl font-bold mb-4">Ek Özellikler</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div onclick="playButtonSound(); openModal('weatherDetails');" class="glass-effect p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="bg-blue-500/20 p-3 rounded-xl group-hover:bg-blue-500/30 transition-colors">
+              <i data-lucide="cloud" class="text-blue-400 w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-semibold">Hava Detayları</h3>
+          </div>
+          <p class="text-sm text-gray-400">Güncel hava durumunu inceleyin</p>
+        </div>
+        <div onclick="playButtonSound(); openModal('energy');" class="glass-effect p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="bg-purple-500/20 p-3 rounded-xl group-hover:bg-purple-500/30 transition-colors">
+              <i data-lucide="bar-chart" class="text-purple-400 w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-semibold">Enerji Analizi</h3>
+          </div>
+          <p class="text-sm text-gray-400">Enerji tüketiminizi analiz edin</p>
+        </div>
+        <div onclick="playButtonSound(); openModal('gps');" class="glass-effect p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="bg-green-500/20 p-3 rounded-xl group-hover:bg-green-500/30 transition-colors">
+              <i data-lucide="map-pin" class="text-green-400 w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-semibold">GPS Takip</h3>
+          </div>
+          <p class="text-sm text-gray-400">Gerçek zamanlı konum bilgisi</p>
+        </div>
+        <div onclick="playButtonSound(); openModal('stats');" class="glass-effect p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="bg-lime-500/20 p-3 rounded-xl group-hover:bg-lime-500/30 transition-colors">
+              <i data-lucide="trending-up" class="text-lime-400 w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-semibold">Sürüş İstatistikleri</h3>
+          </div>
+          <p class="text-sm text-gray-400">Toplam mesafe, ortalama hız vs.</p>
+        </div>
+        <div onclick="playButtonSound(); openModal('maintenance');" class="glass-effect p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="bg-red-500/20 p-3 rounded-xl group-hover:bg-red-500/30 transition-colors">
+              <i data-lucide="tool" class="text-red-400 w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-semibold">Bakım Hatırlatıcı</h3>
+          </div>
+          <p class="text-sm text-gray-400">Önerilen bakım tarihleri</p>
+        </div>
+        <div onclick="playButtonSound(); openModal('safety');" class="glass-effect p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="bg-blue-500/20 p-3 rounded-xl group-hover:bg-blue-500/30 transition-colors">
+              <i data-lucide="shield" class="text-blue-400 w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-semibold">Güvenlik İzleme</h3>
+          </div>
+          <p class="text-sm text-gray-400">Araç güvenliği analizleri</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kategori 4: Gelişmiş Özellikler (Yeni Eklenen 5 Buton) -->
+    <div class="mb-6">
+      <h2 class="text-xl font-bold mb-4">Gelişmiş Özellikler</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Gece Görüş -->
+        <div onclick="playButtonSound(); openModal('nightVision');" class="glass-effect p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="bg-gray-500/20 p-3 rounded-xl group-hover:bg-gray-500/30 transition-colors">
+              <i data-lucide="moon" class="text-gray-400 w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-semibold">Gece Görüş</h3>
+          </div>
+          <p class="text-sm text-gray-400">Karanlıkta sürüş desteği</p>
+        </div>
+        <!-- Acil Durum Kiti -->
+        <div onclick="playButtonSound(); openModal('emergencyKit');" class="glass-effect p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="bg-red-500/20 p-3 rounded-xl group-hover:bg-red-500/30 transition-colors">
+              <i data-lucide="life-buoy" class="text-red-400 w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-semibold">Acil Durum Kiti</h3>
+          </div>
+          <p class="text-sm text-gray-400">Acil durum çağrısı ve yardım</p>
+        </div>
+        <!-- Trafik Analizi -->
+        <div onclick="playButtonSound(); openModal('trafficAnalysis');" class="glass-effect p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="bg-orange-500/20 p-3 rounded-xl group-hover:bg-orange-500/30 transition-colors">
+              <i data-lucide="traffic-cone" class="text-orange-400 w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-semibold">Trafik Analizi</h3>
+          </div>
+          <p class="text-sm text-gray-400">Gerçek zamanlı trafik durumu</p>
+        </div>
+        <!-- Yakıt Optimizasyonu -->
+        <div onclick="playButtonSound(); openModal('fuelOptimization');" class="glass-effect p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="bg-green-500/20 p-3 rounded-xl group-hover:bg-green-500/30 transition-colors">
+              <i data-lucide="fuel" class="text-green-400 w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-semibold">Yakıt Optimizasyonu</h3>
+          </div>
+          <p class="text-sm text-gray-400">Enerji verimliliği önerileri</p>
+        </div>
+        <!-- Sesli Asistan -->
+        <div onclick="playButtonSound(); openModal('voiceAssistant');" class="glass-effect p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="bg-purple-500/20 p-3 rounded-xl group-hover:bg-purple-500/30 transition-colors">
+              <i data-lucide="headphones" class="text-purple-400 w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-semibold">Sesli Asistan</h3>
+          </div>
+          <p class="text-sm text-gray-400">Kişisel asistan ile iletişim</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sistem Durum Bölümü -->
+    <div class="glass-effect p-6 rounded-2xl">
+      <h2 class="text-xl font-semibold mb-6 flex items-center gap-3">
+        <i data-lucide="activity" class="text-cyan-400"></i>
         Sistem Durumu
-      </button>
+      </h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div class="bg-green-500/10 p-4 rounded-xl">
+          <div class="flex items-center gap-2 mb-2">
+            <i data-lucide="power" class="text-green-400"></i>
+            <span class="text-sm font-medium">Sistem Durumu</span>
+          </div>
+          <span class="text-lg font-semibold text-green-400">Aktif</span>
+        </div>
+        <div class="bg-blue-500/10 p-4 rounded-xl">
+          <div class="flex items-center gap-2 mb-2">
+            <i data-lucide="gauge" class="text-blue-400"></i>
+            <span class="text-sm font-medium">Hız</span>
+          </div>
+          <span id="speedDisplay" class="text-lg font-semibold text-blue-400">35 km/s</span>
+        </div>
+        <div class="bg-yellow-500/10 p-4 rounded-xl">
+          <div class="flex items-center gap-2 mb-2">
+            <i data-lucide="battery" class="text-yellow-400"></i>
+            <span class="text-sm font-medium">Batarya</span>
+          </div>
+          <span id="batteryStatus" class="text-lg font-semibold text-yellow-400">85%</span>
+        </div>
+        <div class="bg-cyan-500/10 p-4 rounded-xl">
+          <div class="flex items-center gap-2 mb-2">
+            <i data-lucide="settings-2" class="text-cyan-400"></i>
+            <span class="text-sm font-medium">Çalışma Modu</span>
+          </div>
+          <span id="modeDisplay" class="text-lg font-semibold text-cyan-400">Manuel</span>
+        </div>
+        <div class="bg-red-500/10 p-4 rounded-xl">
+          <div class="flex items-center gap-2 mb-2">
+            <i data-lucide="thermometer" class="text-red-400"></i>
+            <span class="text-sm font-medium">Motor Sıcaklığı</span>
+          </div>
+          <span id="motorTemp" class="text-lg font-semibold text-red-400">65°C</span>
+        </div>
+        <div class="bg-orange-500/10 p-4 rounded-xl">
+          <div class="flex items-center gap-2 mb-2">
+            <i data-lucide="cpu" class="text-orange-400"></i>
+            <span class="text-sm font-medium">Elektronik Sıcaklık</span>
+          </div>
+          <span id="electronicsTemp" class="text-lg font-semibold text-orange-400">45°C</span>
+        </div>
+        <div class="bg-purple-500/10 p-4 rounded-xl">
+          <div class="flex items-center gap-2 mb-2">
+            <i data-lucide="zap" class="text-purple-400"></i>
+            <span class="text-sm font-medium">Enerji Tüketimi</span>
+          </div>
+          <span id="energyConsumption" class="text-lg font-semibold text-purple-400">2.5 kWh/km</span>
+        </div>
+        <div class="bg-indigo-500/10 p-4 rounded-xl">
+          <div class="flex items-center gap-2 mb-2">
+            <i data-lucide="car" class="text-indigo-400"></i>
+            <span class="text-sm font-medium">Sürüş Modu</span>
+          </div>
+          <span id="driveMode" class="text-lg font-semibold text-indigo-400">Normal</span>
+        </div>
+      </div>
     </div>
 
-    <div class="bottom-menu">
-      <i class="fas fa-home" onclick="navigate('home')"></i>
-      <i class="fas fa-sliders-h" onclick="navigate('settings')"></i>
-      <i class="fas fa-cog" onclick="navigate('gear')"></i>
+    <!-- Modal Pencereleri -->
+    <!-- Voice Control Modal -->
+    <div id="voiceModal" class="modal">
+      <div class="glass-effect rounded-2xl p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-semibold flex items-center gap-3">
+            <i data-lucide="mic" class="text-purple-400"></i>
+            Sesli Kontrol
+          </h3>
+          <button onclick="closeModal('voice')" class="text-gray-400 hover:text-white">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div class="space-y-6">
+          <button id="startVoice" class="w-full bg-gradient-to-r from-purple-500 to-blue-500 p-4 rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-3">
+            <i data-lucide="mic"></i>
+            Mikrofonu Aç
+          </button>
+          <div id="voiceStatus" class="text-center p-4 bg-white/5 rounded-xl"></div>
+        </div>
+      </div>
     </div>
 
-    <!-- Özellik içeriğini göstermek için iframe kapsayıcısı -->
-    <div id="iframeContainer">
-      <button id="closeFrame" onclick="closeFrame()">Kapat</button>
-      <iframe id="featureFrame" src=""></iframe>
+    <!-- Remote Control Modal -->
+    <div id="remoteModal" class="modal">
+      <div class="glass-effect rounded-2xl p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-semibold flex items-center gap-3">
+            <i data-lucide="radio" class="text-cyan-400"></i>
+            Uzaktan Kumanda
+          </h3>
+          <button onclick="closeModal('remote')" class="text-gray-400 hover:text-white">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div class="grid grid-cols-3 gap-4 mb-6">
+          <button onclick="setDriveMode('eco')" class="drive-mode-button p-3 rounded-xl border border-white/10 hover:bg-white/10">
+            <i data-lucide="leaf" class="text-green-400 w-6 h-6 mx-auto mb-2"></i>
+            <span class="text-sm">Eko</span>
+          </button>
+          <button onclick="setDriveMode('normal')" class="drive-mode-button p-3 rounded-xl border border-white/10 hover:bg-white/10 active">
+            <i data-lucide="car" class="text-blue-400 w-6 h-6 mx-auto mb-2"></i>
+            <span class="text-sm">Normal</span>
+          </button>
+          <button onclick="setDriveMode('sport')" class="drive-mode-button p-3 rounded-xl border border-white/10 hover:bg-white/10">
+            <i data-lucide="flame" class="text-red-400 w-6 h-6 mx-auto mb-2"></i>
+            <span class="text-sm">Spor</span>
+          </button>
+        </div>
+        <div class="grid grid-cols-3 gap-4 mb-6">
+          <div></div>
+          <button onclick="remoteControl('up')" class="control-button bg-slate-700 p-4 rounded-xl hover:bg-slate-600">
+            <i data-lucide="chevron-up"></i>
+          </button>
+          <div></div>
+          <button onclick="remoteControl('left')" class="control-button bg-slate-700 p-4 rounded-xl hover:bg-slate-600">
+            <i data-lucide="chevron-left"></i>
+          </button>
+          <button onclick="remoteControl('horn')" class="control-button bg-red-500/20 p-4 rounded-xl hover:bg-red-500/30">
+            <i data-lucide="bell" class="text-red-400"></i>
+          </button>
+          <button onclick="remoteControl('right')" class="control-button bg-slate-700 p-4 rounded-xl hover:bg-slate-600">
+            <i data-lucide="chevron-right"></i>
+          </button>
+          <div></div>
+          <button onclick="remoteControl('down')" class="control-button bg-slate-700 p-4 rounded-xl hover:bg-slate-600">
+            <i data-lucide="chevron-down"></i>
+          </button>
+          <div></div>
+        </div>
+        <div class="flex justify-between items-center bg-white/5 p-4 rounded-xl">
+          <label class="flex items-center gap-3">
+            <input type="checkbox" id="solarToggle" class="form-checkbox h-5 w-5 text-cyan-400 rounded" checked>
+            <span>Solar Panel</span>
+          </label>
+          <div class="text-sm font-medium text-cyan-400" id="remoteSpeed">35 km/s</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Şerit Takip Modal -->
+    <div id="trackingModal" class="modal">
+      <div class="glass-effect rounded-2xl p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-semibold flex items-center gap-3">
+            <i data-lucide="navigation-2" class="text-green-400"></i>
+            Şerit Takip
+          </h3>
+          <button onclick="closeModal('tracking')" class="text-gray-400 hover:text-white">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <video id="trackingCamera" autoplay muted style="width:100%; border-radius:12px; background:#000;"></video>
+        <div id="lineStatus" class="text-center p-4 bg-white/5 rounded-xl">Şerit aranıyor...</div>
+        <script>
+          document.getElementById('modeDisplay').textContent = "Şerit Takip";
+          isLineTrackingActive = true;
+          checkForLine();
+        </script>
+      </div>
+    </div>
+
+    <!-- Müzik Çalar Modal -->
+    <div id="musicModal" class="modal">
+      <div class="glass-effect rounded-2xl p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-semibold flex items-center gap-3">
+            <i data-lucide="music" class="text-pink-400"></i>
+            Müzik Çalar
+          </h3>
+          <button onclick="closeModal('music')" class="text-gray-400 hover:text-white">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div class="space-y-4">
+          <audio id="musicPlayer" controls style="width: 100%;">
+            Tarayıcınız audio elementini desteklemiyor.
+          </audio>
+          <div class="flex items-center justify-between">
+            <button onclick="musicControl('prev')" class="control-button bg-slate-700 p-3 rounded-xl hover:bg-slate-600">
+              <i data-lucide="skip-back"></i>
+            </button>
+            <button onclick="musicControl('playPause')" class="control-button bg-slate-700 p-3 rounded-xl hover:bg-slate-600">
+              <i id="playPauseIcon" data-lucide="play"></i>
+            </button>
+            <button onclick="musicControl('next')" class="control-button bg-slate-700 p-3 rounded-xl hover:bg-slate-600">
+              <i data-lucide="skip-forward"></i>
+            </button>
+          </div>
+          <div class="flex items-center justify-between mt-4">
+            <button onclick="musicControl('stop')" class="control-button bg-red-500/20 p-3 rounded-xl hover:bg-red-500/30">
+              <i data-lucide="square"></i>
+            </button>
+            <div class="flex items-center gap-2">
+              <i data-lucide="volume-2"></i>
+              <input type="range" id="volumeControl" min="0" max="1" step="0.01" value="1" class="w-full">
+            </div>
+            <button onclick="addMusic()" class="control-button bg-green-500/20 p-3 rounded-xl hover:bg-green-500/30">
+              <i data-lucide="plus"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Sürüş Modal -->
+    <div id="aiModal" class="modal">
+      <div class="glass-effect rounded-2xl p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-semibold flex items-center gap-3">
+            <i data-lucide="robot" class="text-yellow-400"></i>
+            AI Sürüş
+          </h3>
+          <button onclick="closeModal('ai')" class="text-gray-400 hover:text-white">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div class="space-y-4">
+          <button onclick="startAIDriving()" class="w-full bg-gradient-to-r from-yellow-500 to-orange-500 p-4 rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-3">
+            <i data-lucide="play-circle"></i>
+            AI Sürüşü Başlat
+          </button>
+          <video id="aiCamera" autoplay muted style="width:100%; border-radius:12px; background:#000;"></video>
+          <div id="aiResults" class="p-4 bg-white/5 rounded-xl text-center"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Park Modal -->
+    <div id="aiParkModal" class="modal">
+      <div class="glass-effect rounded-2xl p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-semibold flex items-center gap-3">
+            <i data-lucide="map-pin" class="text-blue-400"></i>
+            AI Park
+          </h3>
+          <button onclick="closeModal('aiPark')" class="text-gray-400 hover:text-white">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div class="space-y-4">
+          <button onclick="startAIPark()" class="w-full bg-gradient-to-r from-blue-500 to-indigo-500 p-4 rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-3">
+            <i data-lucide="play-circle"></i>
+            Park İşlemini Başlat
+          </button>
+          <div id="aiParkResults" class="p-4 bg-white/5 rounded-xl text-center"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rota Planlayıcı Modal -->
+    <div id="rotaModal" class="modal">
+      <div class="glass-effect rounded-2xl p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-semibold flex items-center gap-3">
+            <i data-lucide="map" class="text-indigo-400"></i>
+            Rota Planlayıcı
+          </h3>
+          <button onclick="closeModal('rota')" class="text-gray-400 hover:text-white">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div class="space-y-4">
+          <input id="destinationInput" type="text" placeholder="Hedefinizi yazın..." class="w-full p-3 rounded-xl bg-white/5 border border-white/10">
+          <button onclick="planRoute()" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 p-4 rounded-xl hover:opacity-90 transition-opacity">
+            Rota Oluştur
+          </button>
+          <div id="rotaResult" class="p-4 bg-white/5 rounded-xl text-center"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Araç Durum Raporu Modal -->
+    <div id="reportModal" class="modal">
+      <div class="glass-effect rounded-2xl p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-semibold flex items-center gap-3">
+            <i data-lucide="file-text" class="text-teal-400"></i>
+            Araç Durum Raporu
+          </h3>
+          <button onclick="closeModal('report')" class="text-gray-400 hover:text-white">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div id="reportContent" class="p-4 bg-white/5 rounded-xl text-center"></div>
+        <button onclick="generateReport()" class="w-full bg-gradient-to-r from-teal-500 to-green-500 p-4 rounded-xl hover:opacity-90 transition-opacity mt-4">
+          Raporu Güncelle
+        </button>
+      </div>
+    </div>
+
+    <!-- Sürüş Geçmişi Modal -->
+    <div id="historyModal" class="modal">
+      <div class="glass-effect rounded-2xl p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-semibold flex items-center gap-3">
+            <i data-lucide="clock" class="text-orange-400"></i>
+            Sürüş Geçmişi
+          </h3>
+          <button onclick="closeModal('history')" class="text-gray-400 hover:text-white">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <ul id="historyList" class="space-y-2 bg-white/5 p-4 rounded-xl"></ul>
+        <button onclick="loadDrivingHistory()" class="w-full bg-gradient-to-r from-orange-500 to-red-500 p-4 rounded-xl hover:opacity-90 transition-opacity mt-4">
+          Geçmişi Yenile
+        </button>
+      </div>
+    </div>
+
+    <!-- Hava Detayları Modal -->
+    <div id="weatherDetailsModal" class="modal">
+      <div class="glass-effect rounded-2xl p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-semibold flex items-center gap-3">
+            <i data-lucide="cloud" class="text-blue-400"></i>
+            Hava Detayları
+          </h3>
+          <button onclick="closeModal('weatherDetails')" class="text-gray-400 hover:text-white">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div id="weatherDetailsContent" class="p-4 bg-white/5 rounded-xl text-center">
+          <p>Bugün hava açık, sıcaklık 25°C.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Enerji Analizi Modal -->
+    <div id="energyModal" class="modal">
+      <div class="glass-effect rounded-2xl p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-semibold flex items-center gap-3">
+            <i data-lucide="bar-chart" class="text-purple-400"></i>
+            Enerji Analizi
+          </h3>
+          <button onclick="closeModal('energy')" class="text-gray-400 hover:text-white">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div id="energyContent" class="p-4 bg-white/5 rounded-xl text-center">
+          <p>Ortalama enerji tüketimi: 2.5 kWh/km</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- GPS Takip Modal -->
+    <div id="gpsModal" class="modal">
+      <div class="glass-effect rounded-2xl p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-semibold flex items-center gap-3">
+            <i data-lucide="map-pin" class="text-green-400"></i>
+            GPS Konum Takibi
+          </h3>
+          <button onclick="closeModal('gps')" class="text-gray-400 hover:text-white">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div id="gpsContent" class="p-4 bg-white/5 rounded-xl text-center">
+          <p>Konumunuz: 41.015137, 28.979530</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sürüş İstatistikleri Modal -->
+    <div id="statsModal" class="modal">
+      <div class="glass-effect rounded-2xl p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-semibold flex items-center gap-3">
+            <i data-lucide="trending-up" class="text-lime-400"></i>
+            Sürüş İstatistikleri
+          </h3>
+          <button onclick="closeModal('stats')" class="text-gray-400 hover:text-white">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div id="statsContent" class="p-4 bg-white/5 rounded-xl text-center">
+          <p>Toplam Mesafe: 120 km</p>
+          <p>Ortalama Hız: 38 km/s</p>
+          <p>Enerji Tüketimi: 2.7 kWh/km</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bakım Hatırlatıcı Modal -->
+    <div id="maintenanceModal" class="modal">
+      <div class="glass-effect rounded-2xl p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-semibold flex items-center gap-3">
+            <i data-lucide="tool" class="text-red-400"></i>
+            Bakım Hatırlatıcı
+          </h3>
+          <button onclick="closeModal('maintenance')" class="text-gray-400 hover:text-white">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div id="maintenanceContent" class="p-4 bg-white/5 rounded-xl text-center">
+          <p>Bir sonraki yağ değişimi: 5000 km</p>
+          <p>Lastik basınç kontrolü: 2 gün sonra</p>
+        </div>
+        <button onclick="playNotification()" class="w-full bg-gradient-to-r from-red-500 to-pink-500 p-4 rounded-xl hover:opacity-90 transition-opacity mt-4">
+          Güncelle
+        </button>
+      </div>
+    </div>
+
+    <!-- Güvenlik İzleme Modal -->
+    <div id="safetyModal" class="modal">
+      <div class="glass-effect rounded-2xl p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-semibold flex items-center gap-3">
+            <i data-lucide="shield" class="text-blue-400"></i>
+            Güvenlik İzleme
+          </h3>
+          <button onclick="closeModal('safety')" class="text-gray-400 hover:text-white">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div id="safetyContent" class="p-4 bg-white/5 rounded-xl text-center">
+          <p>Tüm sistemler normal.</p>
+        </div>
+        <button onclick="playNotification()" class="w-full bg-gradient-to-r from-blue-500 to-indigo-500 p-4 rounded-xl hover:opacity-90 transition-opacity mt-4">
+          Kontrol Et
+        </button>
+      </div>
+    </div>
+
+    <!-- Yeni Modal Pencereleri (Gelişmiş Özellikler) -->
+    <!-- Gece Görüş Modal -->
+    <div id="nightVisionModal" class="modal">
+      <div class="glass-effect rounded-2xl p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-semibold flex items-center gap-3">
+            <i data-lucide="moon" class="text-gray-400"></i>
+            Gece Görüş
+          </h3>
+          <button onclick="closeModal('nightVision')" class="text-gray-400 hover:text-white">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div class="space-y-4">
+          <button onclick="startNightVision()" class="w-full bg-gradient-to-r from-gray-500 to-gray-700 p-4 rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-3">
+            <i data-lucide="eye"></i>
+            Gece Görüşü Başlat
+          </button>
+          <video id="nightVisionCamera" autoplay muted style="width:100%; border-radius:12px; background:#000;"></video>
+          <div id="nightVisionStatus" class="p-4 bg-white/5 rounded-xl text-center">Gece görüşü başlatılıyor...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Acil Durum Kiti Modal -->
+    <div id="emergencyKitModal" class="modal">
+      <div class="glass-effect rounded-2xl p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-semibold flex items-center gap-3">
+            <i data-lucide="life-buoy" class="text-red-400"></i>
+            Acil Durum Kiti
+          </h3>
+          <button onclick="closeModal('emergencyKit')" class="text-gray-400 hover:text-white">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div class="space-y-4">
+          <button onclick="callEmergency()" class="w-full bg-gradient-to-r from-red-500 to-orange-500 p-4 rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-3">
+            <i data-lucide="phone-call"></i>
+            Acil Çağrı Yap
+          </button>
+          <div id="emergencyStatus" class="p-4 bg-white/5 rounded-xl text-center">Acil durum kiti hazır.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trafik Analizi Modal -->
+    <div id="trafficAnalysisModal" class="modal">
+      <div class="glass-effect rounded-2xl p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-semibold flex items-center gap-3">
+            <i data-lucide="traffic-cone" class="text-orange-400"></i>
+            Trafik Analizi
+          </h3>
+          <button onclick="closeModal('trafficAnalysis')" class="text-gray-400 hover:text-white">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div id="trafficContent" class="p-4 bg-white/5 rounded-xl text-center">
+          <p>Trafik durumu analiz ediliyor...</p>
+        </div>
+        <button onclick="analyzeTraffic()" class="w-full bg-gradient-to-r from-orange-500 to-yellow-500 p-4 rounded-xl hover:opacity-90 transition-opacity mt-4">
+          Analizi Güncelle
+        </button>
+      </div>
+    </div>
+
+    <!-- Yakıt Optimizasyonu Modal -->
+    <div id="fuelOptimizationModal" class="modal">
+      <div class="glass-effect rounded-2xl p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-semibold flex items-center gap-3">
+            <i data-lucide="fuel" class="text-green-400"></i>
+            Yakıt Optimizasyonu
+          </h3>
+          <button onclick="closeModal('fuelOptimization')" class="text-gray-400 hover:text-white">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div id="fuelOptimizationContent" class="p-4 bg-white/5 rounded-xl text-center">
+          <p>Enerji verimliliği önerileri yükleniyor...</p>
+        </div>
+        <button onclick="optimizeFuel()" class="w-full bg-gradient-to-r from-green-500 to-teal-500 p-4 rounded-xl hover:opacity-90 transition-opacity mt-4">
+          Önerileri Güncelle
+        </button>
+      </div>
+    </div>
+
+    <!-- Sesli Asistan Modal -->
+    <div id="voiceAssistantModal" class="modal">
+      <div class="glass-effect rounded-2xl p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-semibold flex items-center gap-3">
+            <i data-lucide="headphones" class="text-purple-400"></i>
+            Sesli Asistan
+          </h3>
+          <button onclick="closeModal('voiceAssistant')" class="text-gray-400 hover:text-white">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div class="space-y-4">
+          <button onclick="startVoiceAssistant()" class="w-full bg-gradient-to-r from-purple-500 to-indigo-500 p-4 rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-3">
+            <i data-lucide="mic"></i>
+            Asistanı Başlat
+          </button>
+          <div id="assistantResponse" class="p-4 bg-white/5 rounded-xl text-center">Asistan dinliyor...</div>
+        </div>
+      </div>
     </div>
   </div>
 
   <script>
-    // İlgili butona basıldığında, iframe src değeri güncellenir.
-    function loadFeature(category) {
-      var baseUrl = "https://neotrack-kumanda.vercel.app/";
-      // Site, kategori isimlerini hash ile kullanıyorsa; aksi durumda URL düzenlemesi yapılabilir.
-      var url = baseUrl + "#" + category;
-      document.getElementById("featureFrame").src = url;
-      document.getElementById("iframeContainer").style.display = "block";
+    // Ses Efektleri
+    const buttonSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-modern-technology-select-3124.mp3');
+    const hornSound = new Audio('mixkit-car-horn-718.wav');
+    const notificationSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3');
+    const warningSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beeping-989.mp3');
+
+    function playButtonSound() { buttonSound.currentTime = 0; buttonSound.play(); }
+    function playNotification() { notificationSound.currentTime = 0; notificationSound.play(); }
+    function playWarningSound() { warningSound.currentTime = 0; warningSound.play(); }
+    function playHorn() { hornSound.currentTime = 0; hornSound.play(); }
+
+    // Durum ve kontrol değişkenleri
+    let speed = 35,
+        batteryLevel = 85,
+        isLineTrackingActive = false,
+        currentDriveMode = 'normal',
+        motorTemp = 65,
+        electronicsTemp = 45,
+        energyConsumption = 2.5,
+        totalDistance = 0,
+        currentTemperature = 25,
+        speedLimit = 50,
+        aiDetectionInterval;
+    let musicPlaylist = [],
+        currentSongIndex = 0;
+    const musicPlayer = document.getElementById('musicPlayer'),
+          playPauseIcon = document.getElementById('playPauseIcon');
+
+    // Hız, sıcaklık ve enerji güncellemeleri
+    function updateSpeed() {
+      document.getElementById('speedDisplay').textContent = `${speed} km/s`;
+      document.getElementById('remoteSpeed').textContent = `${speed} km/s`;
+      updateTemperatures();
+      updateEnergyConsumption();
+      checkSpeedLimit();
+    }
+    function updateTemperatures() {
+      const speedFactor = speed / 50;
+      const modeFactor = currentDriveMode === 'eco' ? 0.8 : currentDriveMode === 'sport' ? 1.3 : 1;
+      motorTemp = Math.min(90, 50 + (speedFactor * 20 * modeFactor));
+      electronicsTemp = Math.min(70, 35 + (speedFactor * 15 * modeFactor));
+      document.getElementById('motorTemp').textContent = `${Math.round(motorTemp)}°C`;
+      document.getElementById('electronicsTemp').textContent = `${Math.round(electronicsTemp)}°C`;
+    }
+    function updateEnergyConsumption() {
+      const baseConsumption = 2.5;
+      energyConsumption = currentDriveMode === 'eco' ? baseConsumption * 0.8 : currentDriveMode === 'sport' ? baseConsumption * 1.5 : baseConsumption;
+      document.getElementById('energyConsumption').textContent = `${energyConsumption.toFixed(1)} kWh/km`;
+    }
+    function checkSpeedLimit() {
+      const speedWarning = document.getElementById('speedWarning');
+      if (batteryLevel < 60 && speed > 60) {
+        speedWarning.classList.remove('hidden');
+        speedWarning.innerHTML = `<div class="flex items-center justify-center gap-3">
+          <i data-lucide="alert-triangle" class="text-red-400 w-6 h-6"></i>
+          <span class="text-red-400 font-semibold">Şarj Az, Hızı Azaltın!</span>
+        </div>`;
+        playWarningSound();
+      } else {
+        speedWarning.classList.add('hidden');
+      }
+    }
+    function updateWeather() {
+      currentTemperature = Math.round(20 + Math.random() * 20);
+      const conditions = ['sunny', 'rainy', 'icy'];
+      const currentCondition = conditions[Math.floor(Math.random() * conditions.length)];
+      document.getElementById('temperature').textContent = `${currentTemperature}°C`;
+      const weatherWarning = document.getElementById('weatherWarning'),
+            weatherWarningText = document.getElementById('weatherWarningText');
+      if (currentTemperature > 35) {
+        weatherWarning.classList.remove('hidden');
+        weatherWarningText.textContent = 'Yüksek Sıcaklık Uyarısı!';
+        playWarningSound();
+      } else if (currentCondition === 'rainy') {
+        weatherWarning.classList.remove('hidden');
+        weatherWarningText.textContent = 'Yağmurlu Hava - Dikkatli Sürün!';
+        document.getElementById('roadStatus').innerHTML = `<i data-lucide="cloud-rain" class="text-blue-400"></i><span id="roadCondition" class="text-sm font-medium">Islak Zemin</span>`;
+        speedLimit = 30;
+      } else if (currentCondition === 'icy') {
+        weatherWarning.classList.remove('hidden');
+        weatherWarningText.textContent = 'Buzlanma Tehlikesi - Dikkatli Sürün!';
+        document.getElementById('roadStatus').innerHTML = `<i data-lucide="snowflake" class="text-blue-400"></i><span id="roadCondition" class="text-sm font-medium">Buzlu Zemin</span>`;
+        speedLimit = 20;
+      } else {
+        weatherWarning.classList.add('hidden');
+        document.getElementById('roadStatus').innerHTML = `<i data-lucide="road" class="text-green-400"></i><span id="roadCondition" class="text-sm font-medium">Normal</span>`;
+        speedLimit = 50;
+      }
+      lucide.createIcons();
+      checkSpeedLimit();
+    }
+    const speedLimits = { eco: 30, normal: 50, sport: 100 };
+
+    // Sesli kontrol
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'tr-TR';
+    recognition.continuous = true;
+    recognition.onresult = (event) => {
+      const command = event.results[event.results.length - 1][0].transcript.toLowerCase();
+      handleVoiceCommand(command);
+    };
+    recognition.onend = () => { if (document.getElementById('voiceModal').classList.contains('active')) { recognition.start(); } };
+    document.getElementById('startVoice').addEventListener('click', () => {
+      playButtonSound();
+      recognition.start();
+      document.getElementById('voiceStatus').innerHTML = `<div class="flex items-center justify-center gap-2 text-green-400"><i data-lucide="mic"></i><span>Mikrofon Aktif - Komut Söyleyin</span></div>`;
+      lucide.createIcons();
+    });
+    document.getElementById('solarToggle').addEventListener('change', (e) => {
+      playButtonSound();
+      document.getElementById('solarStatus').textContent = e.target.checked ? 'Solar Panel Aktif' : 'Solar Panel Pasif';
+    });
+    setInterval(() => {
+      if (document.getElementById('solarToggle').checked) { batteryLevel = Math.min(batteryLevel + 1, 100); }
+      else { batteryLevel = Math.max(batteryLevel - 1, 0); }
+      document.getElementById('batteryStatus').textContent = `${batteryLevel}%`;
+    }, 5000);
+
+    // Modal açma/kapama
+    function openModal(type) {
+      playButtonSound();
+      document.querySelectorAll('.modal').forEach(modal => modal.classList.remove('active'));
+      document.getElementById(`${type}Modal`).classList.add('active');
+      if (type === 'tracking') {
+        document.getElementById('modeDisplay').textContent = "Şerit Takip";
+        isLineTrackingActive = true;
+        navigator.mediaDevices.getUserMedia({ video: true })
+          .then(stream => {
+            const video = document.getElementById("trackingCamera");
+            video.srcObject = stream;
+            video.play();
+            checkForLine();
+          })
+          .catch(err => {
+            console.error("Kamera erişimi hatası (Şerit Takip):", err);
+            playWarningSound();
+          });
+      } else if (type === 'nightVision') {
+        startNightVision();
+      }
+    }
+    function closeModal(type) {
+      playButtonSound();
+      document.getElementById(`${type}Modal`).classList.remove('active');
+      if (type === 'tracking') {
+        const video = document.getElementById("trackingCamera");
+        if (video.srcObject) {
+          video.srcObject.getTracks().forEach(track => track.stop());
+          video.srcObject = null;
+        }
+        isLineTrackingActive = false;
+      } else if (type === 'voice') {
+        recognition.stop();
+        document.getElementById('voiceStatus').textContent = '';
+      } else if (type === 'ai') {
+        const video = document.getElementById("aiCamera");
+        if (video.srcObject) {
+          video.srcObject.getTracks().forEach(track => track.stop());
+          video.srcObject = null;
+        }
+        clearInterval(aiDetectionInterval);
+        document.getElementById("aiResults").textContent = "";
+      } else if (type === 'aiPark') {
+        document.getElementById("aiParkResults").textContent = "";
+      } else if (type === 'nightVision') {
+        const video = document.getElementById("nightVisionCamera");
+        if (video.srcObject) {
+          video.srcObject.getTracks().forEach(track => track.stop());
+          video.srcObject = null;
+        }
+      } else if (type === 'voiceAssistant') {
+        recognition.stop();
+        document.getElementById('assistantResponse').textContent = '';
+      }
     }
 
-    // iframe'i kapatmak için
-    function closeFrame() {
-      document.getElementById("iframeContainer").style.display = "none";
-      document.getElementById("featureFrame").src = "";
+    function setDriveMode(mode) {
+      playButtonSound();
+      currentDriveMode = mode;
+      document.querySelectorAll('.drive-mode-button').forEach(btn => btn.classList.remove('active'));
+      document.querySelector(`[onclick="setDriveMode('${mode}')"]`).classList.add('active');
+      document.getElementById('driveMode').textContent = mode === 'eco' ? 'Eko' : mode === 'sport' ? 'Spor' : 'Normal';
+      const maxSpeed = speedLimits[mode];
+      if (speed > maxSpeed) { speed = maxSpeed; updateSpeed(); }
+      updateEnergyConsumption();
+    }
+    function remoteControl(direction) {
+      playButtonSound();
+      const maxSpeed = speedLimits[currentDriveMode];
+      switch (direction) {
+        case 'up': speed = Math.min(speed + 5, maxSpeed); updateSpeed(); break;
+        case 'down': speed = Math.max(speed - 5, 0); updateSpeed(); break;
+        case 'horn': playHorn(); break;
+      }
+    }
+    function handleVoiceCommand(command) {
+      playButtonSound();
+      switch (command) {
+        case 'ileri': speed = Math.min(speed + 5, speedLimits[currentDriveMode]); updateSpeed(); break;
+        case 'geri': speed = Math.max(speed - 5, 0); updateSpeed(); break;
+        case 'korna': playHorn(); break;
+        case 'dur': speed = 0; updateSpeed(); break;
+        case 'spor mod': setDriveMode('sport'); break;
+        case 'eko mod': setDriveMode('eco'); break;
+        case 'normal mod': setDriveMode('normal'); break;
+      }
+    }
+    function startAIDriving() {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+          const video = document.getElementById("aiCamera");
+          video.srcObject = stream;
+          video.play();
+          document.getElementById('modeDisplay').textContent = "Ai Sürüş Sistemi";
+          aiDetectionInterval = setInterval(() => {
+            const messages = ["Yol üzerinde insan algılandı!", "Nesne algılandı, dikkat!", "Yol boş, güvenli sürüş.", "Bir araç algılandı!"];
+            const message = messages[Math.floor(Math.random() * messages.length)];
+            document.getElementById("aiResults").textContent = message;
+          }, 3000);
+        })
+        .catch(err => { console.error("Kamera erişimi hatası:", err); playWarningSound(); });
+    }
+    function startAIPark() {
+      document.getElementById('aiParkResults').textContent = "Park asistanı aktif, park alanı taranıyor...";
+      setTimeout(() => {
+        document.getElementById('aiParkResults').textContent = "Park işlemi tamamlandı!";
+      }, 5000);
+    }
+    function planRoute() {
+      const destination = document.getElementById("destinationInput").value;
+      const resultDiv = document.getElementById("rotaResult");
+      if (destination.trim() === "") {
+        resultDiv.textContent = "Lütfen geçerli bir hedef girin.";
+      } else {
+        resultDiv.textContent = `Rota oluşturuluyor: ${destination}`;
+        setTimeout(() => {
+          resultDiv.textContent = `Rota hazır: ${destination} için en uygun güzergah belirlendi.`;
+          document.getElementById("routeInfo").textContent = `Oluşturulan Rota: ${destination}`;
+          playNotification();
+        }, 3000);
+      }
+    }
+    function generateReport() {
+      const reportDiv = document.getElementById("reportContent");
+      reportDiv.innerHTML = `
+        <p>Motor Sıcaklığı: ${Math.round(motorTemp)}°C</p>
+        <p>Elektronik Sıcaklık: ${Math.round(electronicsTemp)}°C</p>
+        <p>Batarya: ${batteryLevel}%</p>
+        <p>Enerji Tüketimi: ${energyConsumption.toFixed(1)} kWh/km</p>
+        <p>Hız: ${speed} km/s</p>
+      `;
+      playNotification();
+    }
+    function loadDrivingHistory() {
+      const historyList = document.getElementById("historyList");
+      const historyData = [
+        "12:00 - 12:30, 35 km/s, Normal",
+        "13:15 - 13:45, 40 km/s, Hız limiti aşıldı",
+        "14:00 - 14:20, 30 km/s, Eko mod",
+        "15:00 - 15:30, 45 km/s, Spor mod"
+      ];
+      historyList.innerHTML = "";
+      historyData.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        li.classList.add("bg-white/10", "p-3", "rounded-xl");
+        historyList.appendChild(li);
+      });
+      playNotification();
+    }
+    function musicControl(action) {
+      if (!musicPlayer) return;
+      switch (action) {
+        case 'playPause':
+          if (musicPlayer.paused) {
+            musicPlayer.play();
+            playPauseIcon.setAttribute('data-lucide', 'pause');
+          } else {
+            musicPlayer.pause();
+            playPauseIcon.setAttribute('data-lucide', 'play');
+          }
+          lucide.createIcons();
+          break;
+        case 'stop':
+          musicPlayer.pause();
+          musicPlayer.currentTime = 0;
+          playPauseIcon.setAttribute('data-lucide', 'play');
+          lucide.createIcons();
+          break;
+        case 'next':
+          if (musicPlaylist.length) {
+            currentSongIndex = (currentSongIndex + 1) % musicPlaylist.length;
+            musicPlayer.src = musicPlaylist[currentSongIndex];
+            musicPlayer.play();
+            playPauseIcon.setAttribute('data-lucide', 'pause');
+            lucide.createIcons();
+          }
+          break;
+        case 'prev':
+          if (musicPlaylist.length) {
+            currentSongIndex = (currentSongIndex - 1 + musicPlaylist.length) % musicPlaylist.length;
+            musicPlayer.src = musicPlaylist[currentSongIndex];
+            musicPlayer.play();
+            playPauseIcon.setAttribute('data-lucide', 'pause');
+            lucide.createIcons();
+          }
+          break;
+      }
+    }
+    document.getElementById('volumeControl').addEventListener('input', (e) => {
+      musicPlayer.volume = e.target.value;
+    });
+    function addMusic() {
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = 'audio/*';
+      fileInput.onchange = e => {
+        const file = e.target.files[0];
+        if (file) {
+          const url = URL.createObjectURL(file);
+          musicPlaylist.push(url);
+          currentSongIndex = musicPlaylist.length - 1;
+          musicPlayer.src = url;
+          musicPlayer.play();
+          playPauseIcon.setAttribute('data-lucide', 'pause');
+          lucide.createIcons();
+        }
+      };
+      fileInput.click();
     }
 
-    // Alt menüdeki gezinme işlevleri (örnek, daha gelişmiş yönlendirmeler eklenebilir)
-    function navigate(page) {
-      alert(page + " sayfasına gidiliyor...");
+    // Yeni Fonksiyonlar (Gelişmiş Özellikler)
+    function startNightVision() {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+          const video = document.getElementById("nightVisionCamera");
+          video.srcObject = stream;
+          video.play();
+          document.getElementById('nightVisionStatus').textContent = "Gece görüşü aktif.";
+          document.getElementById('modeDisplay').textContent = "Gece Görüş";
+        })
+        .catch(err => {
+          console.error("Kamera erişimi hatası (Gece Görüş):", err);
+          document.getElementById('nightVisionStatus').textContent = "Kamera erişimi başarısız!";
+          playWarningSound();
+        });
     }
+    function callEmergency() {
+      document.getElementById('emergencyStatus').textContent = "Acil durum çağrısı yapılıyor...";
+      setTimeout(() => {
+        document.getElementById('emergencyStatus').textContent = "Yardım yolda!";
+        playNotification();
+      }, 3000);
+    }
+    function analyzeTraffic() {
+      const trafficContent = document.getElementById('trafficContent');
+      trafficContent.textContent = "Trafik durumu analiz ediliyor...";
+      setTimeout(() => {
+        const trafficConditions = ["Yoğun trafik", "Hafif trafik", "Normal akış"];
+        const randomCondition = trafficConditions[Math.floor(Math.random() * trafficConditions.length)];
+        trafficContent.textContent = `Güncel trafik durumu: ${randomCondition}`;
+        playNotification();
+      }, 2000);
+    }
+    function optimizeFuel() {
+      const fuelContent = document.getElementById('fuelOptimizationContent');
+      fuelContent.textContent = "Enerji optimizasyonu hesaplanıyor...";
+      setTimeout(() => {
+        fuelContent.innerHTML = `
+          <p>Öneri: Hızı ${speedLimits.eco} km/s altına düşürün.</p>
+          <p>Eko modunu kullanın.</p>
+          <p>Enerji tasarrufu: %${Math.round(energyConsumption * 10)}</p>
+        `;
+        playNotification();
+      }, 2000);
+    }
+    function startVoiceAssistant() {
+      recognition.start();
+      document.getElementById('assistantResponse').textContent = "Asistan dinliyor...";
+      recognition.onresult = (event) => {
+        const command = event.results[event.results.length - 1][0].transcript.toLowerCase();
+        document.getElementById('assistantResponse').textContent = `Komut: ${command}`;
+        if (command.includes("hava durumu")) {
+          document.getElementById('assistantResponse').textContent = `Hava durumu: ${currentTemperature}°C`;
+        } else if (command.includes("rota")) {
+          document.getElementById('assistantResponse').textContent = "Rota planlayıcı açılıyor...";
+          setTimeout(() => openModal('rota'), 1000);
+        } else {
+          document.getElementById('assistantResponse').textContent = "Komut anlaşılamadı.";
+        }
+        playNotification();
+      };
+    }
+
+    // Başlangıç ayarları
+    updateSpeed();
+    updateTemperatures();
+    updateEnergyConsumption();
+    setDriveMode('normal');
+    updateWeather();
+    setInterval(updateWeather, 30000);
+    lucide.createIcons();
   </script>
 </body>
 </html>
