@@ -202,14 +202,14 @@
             <i data-lucide="gauge" class="text-blue-400"></i>
             <span class="text-sm font-medium">Hız</span>
           </div>
-          <span id="speedDisplayPanel" class="text-lg font-semibold text-blue-400">35 km/s</span>
+          <span id="speedDisplay" class="text-lg font-semibold text-blue-400">35 km/s</span>
         </div>
         <div class="bg-yellow-500/10 p-4 rounded-xl">
           <div class="flex items-center gap-2 mb-2">
             <i data-lucide="battery" class="text-yellow-400"></i>
             <span class="text-sm font-medium">Batarya</span>
           </div>
-          <span id="batteryStatusPanel" class="text-lg font-semibold text-yellow-400">85%</span>
+          <span id="batteryStatus" class="text-lg font-semibold text-yellow-400">85%</span>
         </div>
         <div class="bg-cyan-500/10 p-4 rounded-xl">
           <div class="flex items-center gap-2 mb-2">
@@ -228,7 +228,7 @@
         <div class="bg-orange-500/10 p-4 rounded-xl">
           <div class="flex items-center gap-2 mb-2">
             <i data-lucide="cpu" class="text-orange-400"></i>
-            <span class="text-sm font-medium">Elektronik Sıcaklığı</span>
+            <span class="text-sm font-medium">Elektronik Sıcaklık</span>
           </div>
           <span id="electronicsTemp" class="text-lg font-semibold text-orange-400">45°C</span>
         </div>
@@ -244,8 +244,44 @@
             <i data-lucide="car" class="text-indigo-400"></i>
             <span class="text-sm font-medium">Sürüş Modu</span>
           </div>
-          <span id="driveModePanel" class="text-lg font-semibold text-indigo-400">Normal</span>
+          <span id="driveMode" class="text-lg font-semibold text-indigo-400">Normal</span>
         </div>
+      </div>
+    </div>
+
+    <!-- Yeni Eklenen Bölüm: Araç Sağlık Durumu -->
+    <div class="glass-effect p-6 rounded-2xl mb-6">
+      <h2 class="text-xl font-semibold mb-4 flex items-center gap-3">
+        <i data-lucide="heart" class="text-pink-400"></i>
+        Araç Sağlık Durumu
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-blue-500/10 p-4 rounded-xl">
+          <div class="flex items-center gap-2 mb-2">
+            <i data-lucide="activity" class="text-blue-400"></i>
+            <span class="text-sm font-medium">Health Score</span>
+          </div>
+          <span class="text-lg font-semibold text-blue-400">95/100</span>
+        </div>
+        <div class="bg-green-500/10 p-4 rounded-xl">
+          <div class="flex items-center gap-2 mb-2">
+            <i data-lucide="tool" class="text-green-400"></i>
+            <span class="text-sm font-medium">Bakım Mesafesi</span>
+          </div>
+          <span class="text-lg font-semibold text-green-400">300 km</span>
+        </div>
+        <div class="bg-purple-500/10 p-4 rounded-xl">
+          <div class="flex items-center gap-2 mb-2">
+            <i data-lucide="check-circle" class="text-purple-400"></i>
+            <span class="text-sm font-medium">Diagnostic</span>
+          </div>
+          <span class="text-lg font-semibold text-purple-400">Geçti</span>
+        </div>
+      </div>
+      <div class="mt-4 text-right">
+        <button onclick="openModal('diagnostic')" class="bg-gradient-to-r from-pink-500 to-red-500 px-4 py-2 rounded hover:opacity-90 transition-colors">
+          Detaylı Diagnostic
+        </button>
       </div>
     </div>
   </div>
@@ -308,7 +344,7 @@
   </div>
 
   <!-- Örnek Modallar (Navigasyon, Müzik, vs.) -->
-  <!-- Örnek: Navigasyon Modalı -->
+  <!-- Navigasyon Modalı -->
   <div id="navModal" class="modal">
     <div class="bg-slate-800 p-6 rounded-2xl shadow-xl w-11/12 md:w-1/3">
       <h3 class="text-2xl font-bold mb-4">Rota Oluşturma</h3>
@@ -318,15 +354,33 @@
       </button>
     </div>
   </div>
-  <!-- Diğer modallar (musicModal, emergencyModal, trackingModal, vb.) – 
-       Yüklediğiniz kontrol panelindeki tüm modallar bu örneğe eklenebilir. -->
+  <!-- Yeni Ek Özellik: Diagnostic Modal -->
+  <div id="diagnosticModal" class="modal">
+    <div class="bg-slate-800 p-6 rounded-2xl shadow-xl w-11/12 md:w-1/3">
+      <h3 class="text-2xl font-bold mb-4 flex items-center gap-3">
+        <i data-lucide="clipboard" class="text-pink-400"></i>
+        Diagnostic Raporu
+      </h3>
+      <div id="diagnosticContent" class="p-4 bg-white/5 rounded-xl text-center">
+        <p>Motor: 95%</p>
+        <p>Elektronik: 97%</p>
+        <p>Lastik Durumu: İyi</p>
+        <p>Genel Sağlık: 96/100</p>
+      </div>
+      <button onclick="playNotification()" class="w-full bg-gradient-to-r from-pink-500 to-red-500 p-4 rounded-xl hover:opacity-90 transition-opacity mt-4">
+        Raporu Yenile
+      </button>
+    </div>
+  </div>
+
+  <!-- (Yüklediğiniz diğer tüm modallar ve kontroller burada mevcut. İhtiyaç duyulursa yeni modallar eklenebilir.) -->
 
   <!-- Scriptler -->
   <script>
     // Lucide ikonlarını oluştur
     lucide.createIcons();
 
-    // Modal açma/kapama
+    // Modal açma/kapama fonksiyonları
     function toggleSettings() {
       document.getElementById('settingsModal').classList.toggle('active');
     }
@@ -334,24 +388,31 @@
       document.getElementById('notificationsModal').classList.toggle('active');
     }
     function openModal(type) {
-      // Tüm modalları kapat
+      playButtonSound();
       document.querySelectorAll('.modal').forEach(modal => modal.classList.remove('active'));
-      // İlgili modalı aç
       document.getElementById(`${type}Modal`).classList.add('active');
-      // Özel işlemler örneğin: Kamera açma, vs.
       if(type === 'tracking') {
+        document.getElementById('modeDisplay').textContent = "Şerit Takip";
+        isLineTrackingActive = true;
         navigator.mediaDevices.getUserMedia({ video: true })
           .then(stream => {
             const video = document.getElementById("trackingCamera");
             if(video) {
               video.srcObject = stream;
               video.play();
+              // checkForLine(); // Fonksiyon varsa çalıştırabilirsiniz.
             }
           })
-          .catch(err => console.error("Kamera erişimi hatası:", err));
+          .catch(err => {
+            console.error("Kamera erişimi hatası:", err);
+            playWarningSound();
+          });
+      } else if(type === 'nightVision') {
+        startNightVision();
       }
     }
     function closeModal(type) {
+      playButtonSound();
       document.getElementById(`${type}Modal`).classList.remove('active');
       if (type === 'tracking') {
         const video = document.getElementById("trackingCamera");
@@ -359,6 +420,29 @@
           video.srcObject.getTracks().forEach(track => track.stop());
           video.srcObject = null;
         }
+        isLineTrackingActive = false;
+      } else if (type === 'voice') {
+        recognition.stop();
+        document.getElementById('voiceStatus').textContent = '';
+      } else if (type === 'ai') {
+        const video = document.getElementById("aiCamera");
+        if (video.srcObject) {
+          video.srcObject.getTracks().forEach(track => track.stop());
+          video.srcObject = null;
+        }
+        clearInterval(aiDetectionInterval);
+        document.getElementById("aiResults").textContent = "";
+      } else if (type === 'aiPark') {
+        document.getElementById("aiParkResults").textContent = "";
+      } else if (type === 'nightVision') {
+        const video = document.getElementById("nightVisionCamera");
+        if (video.srcObject) {
+          video.srcObject.getTracks().forEach(track => track.stop());
+          video.srcObject = null;
+        }
+      } else if (type === 'voiceAssistant') {
+        recognition.stop();
+        document.getElementById('assistantResponse').textContent = '';
       }
     }
 
@@ -391,12 +475,52 @@
       toggleSettings();
     }
 
-    // Ses efekti örneği
+    // Ses efektleri
     const buttonSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-modern-technology-select-3124.mp3');
     function playButtonSound() {
       buttonSound.currentTime = 0;
       buttonSound.play();
     }
+    function playNotification() {
+      notificationSound.currentTime = 0;
+      notificationSound.play();
+    }
+    const notificationSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3');
+    function playWarningSound() {
+      warningSound.currentTime = 0;
+      warningSound.play();
+    }
+    const warningSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beeping-989.mp3');
+    function playHorn() {
+      hornSound.currentTime = 0;
+      hornSound.play();
+    }
+    const hornSound = new Audio('mixkit-car-horn-718.wav');
+
+    // Diğer kontrol ve güncelleme fonksiyonları (updateSpeed, updateWeather, setDriveMode, remoteControl, vs.) 
+    // mevcut koddan olduğu gibi çalışacaktır.
+
+    // Yeni özellik: Diagnostic Modal için (Araç Sağlık Durumu detayları)
+    // Örneğin; diagnosticContent içeriği daha dinamik hale getirilebilir.
+    function loadDiagnosticReport() {
+      const diag = document.getElementById("diagnosticContent");
+      diag.innerHTML = `
+        <p>Motor: ${Math.round(motorTemp * 1.1)}%</p>
+        <p>Elektronik: ${Math.round(electronicsTemp * 1.05)}%</p>
+        <p>Lastik Durumu: İyi</p>
+        <p>Genel Sağlık: ${95 + Math.floor(Math.random()*5)}/100</p>
+      `;
+      playNotification();
+    }
+
+    // Başlangıç ayarları
+    updateSpeed();
+    updateTemperatures();
+    updateEnergyConsumption();
+    // setDriveMode fonksiyonu mevcutsa çağrılabilir.
+    // updateWeather ve diğer fonksiyonlar da aynen çalışacaktır.
+    setInterval(updateWeather, 30000);
+    lucide.createIcons();
   </script>
 </body>
 </html>
