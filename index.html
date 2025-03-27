@@ -2,363 +2,67 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>Fun Teknoloji Konuşma Destek Sistemi</title>
+  <title>Kullanıcı Listesi</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 40px; }
-    #startButton { padding: 10px 20px; font-size: 16px; }
-    #result { margin-top: 20px; font-size: 18px; }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+    }
+    th {
+      background-color: #eee;
+    }
   </style>
 </head>
 <body>
-  <h1>Fun Teknoloji Konuşma Destek Sistemi</h1>
-  <button id="startButton">Dinlemeyi Başlat</button>
-  <p id="result">Kullanıcı soruları burada görüntülenecek.</p>
+  <h1>Kullanıcı Listesi</h1>
+  <table id="usersTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Email</th>
+        <!-- Diğer sütunlar için başlık ekleyebilirsiniz -->
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Veriler burada listelenecek -->
+    </tbody>
+  </table>
 
   <script>
-    // Tarayıcı uyumluluğunu kontrol et
-    window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!window.SpeechRecognition) {
-      alert("Tarayıcınız Speech Recognition API'sini desteklemiyor.");
-    } else {
-      const recognition = new window.SpeechRecognition();
-      recognition.lang = 'tr-TR'; // Türkçe dil desteği
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
+    async function fetchUsers() {
+      try {
+        const res = await fetch('/api/users');
+        const users = await res.json();
+        const tbody = document.querySelector('#usersTable tbody');
+        tbody.innerHTML = "";
+        users.forEach(user => {
+          const tr = document.createElement('tr');
 
-      const startButton = document.getElementById('startButton');
-      const resultPara = document.getElementById('result');
+          // ID sütunu
+          const idTd = document.createElement('td');
+          idTd.textContent = user.id || 'N/A';
+          tr.appendChild(idTd);
 
-      // Konuşmalarımıza ve şirketle ilgili detaylara dayalı 200 soru–cevap çifti
-      const conversationData = [
-        { question: "merhaba", answer: "Merhaba, ben Fun Teknoloji. Nasıl yardımcı olabilirim?" },
-        { question: "fun teknoloji nedir", answer: "Fun Teknoloji, yenilikçi teknolojik çözümler sunan bir şirkettir." },
-        { question: "şirket nedir", answer: "Şirketimiz, teknolojide yenilikçi ürün ve hizmetler geliştirmektedir." },
-        { question: "şirketin kuruluş yılı nedir", answer: "Şirketimiz 2010 yılında kurulmuştur." },
-        { question: "hizmetleriniz nelerdir", answer: "Yazılım, donanım, bulut çözümleri ve dijital pazarlama hizmetleri sunmaktayız." },
-        { question: "ürün portföyünüz nedir", answer: "Geniş bir ürün yelpazesi ile müşterilerimize çözümler sunuyoruz." },
-        { question: "müşteri destek hattınız nedir", answer: "7/24 hizmet veren destek hattımız bulunmaktadır." },
-        { question: "web siteniz güncel mi", answer: "Evet, web sitemiz sürekli güncellenmektedir." },
-        { question: "blog sayfanız var mı", answer: "Evet, teknoloji ve güncel gelişmeler hakkında blog yazılarımız bulunmaktadır." },
-        { question: "sosyal medya hesaplarınız neler", answer: "Facebook, Twitter, Instagram ve LinkedIn üzerinden bizle iletişim kurabilirsiniz." },
-        { question: "iş başvurusu nasıl yapılır", answer: "Kariyer sayfamızdan güncel iş ilanlarına başvurabilirsiniz." },
-        { question: "yatırım fırsatları sunuyor musunuz", answer: "Yatırımcı ilişkileri departmanımızla detaylı bilgi alabilirsiniz." },
-        { question: "şirketin vizyonu nedir", answer: "Teknolojiyi insan yaşamına entegre ederek yenilikçi çözümler sunmaktır." },
-        { question: "şirketin misyonu nedir", answer: "Müşteri memnuniyetini en üst seviyede tutarak sürekli gelişmektir." },
-        { question: "ofis lokasyonlarınız nerede", answer: "Merkezi İstanbul'da olmak üzere, farklı şehirlerde ofislerimiz mevcuttur." },
-        { question: "ürün fiyatlarınız nedir", answer: "Ürün fiyatlarımız detaylı bilgi sayfamızda belirtilmektedir." },
-        { question: "yeni ürün duyurularınız var mı", answer: "Evet, yeni ürün ve hizmet duyurularımızı web sitemizden takip edebilirsiniz." },
-        { question: "teknik destek nasıl sağlanır", answer: "Online destek sistemimiz ve çağrı merkezimiz ile teknik destek verilmektedir." },
-        { question: "garanti süresi nedir", answer: "Ürün tipine göre değişmekle birlikte, standart garanti süresi 2 yıldır." },
-        { question: "yazılım güncellemeleri nasıl yapılır", answer: "Otomatik güncelleme sistemimiz sayesinde yazılım güncellemeleri sorunsuz gerçekleşir." },
-        { question: "müşteri memnuniyeti nasıl sağlanır", answer: "Geri bildirimler ve sürekli iyileştirme politikamız sayesinde sağlanır." },
-        { question: "ödeme seçenekleriniz nelerdir", answer: "Kredi kartı, banka havalesi ve mobil ödeme seçenekleri sunmaktayız." },
-        { question: "kargo süreleri nedir", answer: "Siparişleriniz en geç 3 iş günü içinde teslim edilmektedir." },
-        { question: "iade politikası nedir", answer: "Ürünlerimiz için 14 gün içinde iade garantisi sunmaktayız." },
-        { question: "online satış yapıyor musunuz", answer: "Evet, web sitemiz üzerinden online satış yapmaktayız." },
-        { question: "ürünün teknik özellikleri nelerdir", answer: "Her ürün için detaylı teknik özellikler ürün sayfalarında yer almaktadır." },
-        { question: "şirketin tarihçesi nedir", answer: "2010 yılından bu yana teknoloji alanında faaliyet göstermekteyiz." },
-        { question: "referanslarınız nelerdir", answer: "Birçok ulusal ve uluslararası referansa sahibiz." },
-        { question: "başarı hikayeleriniz neler", answer: "Müşteri başarı hikayelerimizi web sitemizde inceleyebilirsiniz." },
-        { question: "müşterileriniz kimlerdir", answer: "KOBİ'lerden büyük ölçekli şirketlere kadar geniş bir müşteri portföyümüz vardır." },
-        { question: "global bir şirket misiniz", answer: "Şu anda ağırlıklı olarak yerel pazara hizmet vermekteyiz." },
-        { question: "ar-ge faaliyetleriniz var mı", answer: "Evet, güçlü bir Ar-Ge ekibimizle yenilikçi çözümler üretiyoruz." },
-        { question: "yeni teknolojilere yatırım yapıyor musunuz", answer: "Kesinlikle, sürekli olarak yeni teknolojilere yatırım yapmaktayız." },
-        { question: "müşteri geri bildirimleri nasıl değerlendiriliyor", answer: "Geri bildirimler sistemli bir şekilde analiz edilip iyileştirme sağlanır." },
-        { question: "destek ekibiniz kaç kişiden oluşuyor", answer: "Yaklaşık 50 kişilik profesyonel bir destek ekibimiz bulunmaktadır." },
-        { question: "uygulama geliştirme süreciniz nedir", answer: "Agile metodolojiyi benimseyerek hızlı ve verimli çözümler geliştiriyoruz." },
-        { question: "mobil uygulamanız var mı", answer: "Evet, hem Android hem de iOS platformlarında uygulamalarımız bulunmaktadır." },
-        { question: "web tasarım hizmeti sunuyor musunuz", answer: "Evet, modern ve kullanıcı odaklı web tasarım hizmetleri vermekteyiz." },
-        { question: "bulut teknolojisi kullanıyor musunuz", answer: "Evet, bulut tabanlı çözümlerle müşterilerimize esneklik sağlıyoruz." },
-        { question: "siber güvenlik önlemleriniz nelerdir", answer: "En güncel güvenlik protokollerini ve şifreleme yöntemlerini kullanıyoruz." },
-        { question: "veri koruma politikalarınız nelerdir", answer: "Kullanıcı verilerinin korunması için katı veri koruma politikalarımız vardır." },
-        { question: "iş ortaklıklarınız neler", answer: "Birçok yerel ve uluslararası iş ortağımız ile çalışmaktayız." },
-        { question: "müşteri eğitim programlarınız var mı", answer: "Evet, müşterilerimiz için düzenli eğitim ve seminerler düzenliyoruz." },
-        { question: "seminer veya webinar düzenliyor musunuz", answer: "Evet, düzenli olarak seminer ve webinar etkinlikleri gerçekleştiriyoruz." },
-        { question: "lisans anlaşmalarınız var mı", answer: "Evet, çeşitli lisans anlaşmaları kapsamında hizmet sunmaktayız." },
-        { question: "sektördeki liderliğiniz nedir", answer: "Teknoloji ve inovasyonda sektörde öncü konumdayız." },
-        { question: "müşteri deneyimi nasıl iyileştiriliyor", answer: "Geri bildirimler ve sürekli iyileştirme süreçlerimiz ile sağlanmaktadır." },
-        { question: "ürün garantisi var mı", answer: "Evet, tüm ürünlerimiz belirli garanti koşulları ile satılmaktadır." },
-        { question: "yazılım lisanslama modeli nedir", answer: "Abonelik ve tek seferlik lisans seçenekleri sunuyoruz." },
-        { question: "servis anlaşmalarınız nasıl işliyor", answer: "Servis anlaşmalarımız müşteriye özel olarak düzenlenmektedir." },
-        { question: "güncel teknolojik trendleri takip ediyor musunuz", answer: "Evet, sektörün en son trendlerini yakından izliyoruz." },
-        { question: "ödeme sistemleri güvenli mi", answer: "Tüm ödeme sistemlerimiz en yüksek güvenlik standartlarını karşılamaktadır." },
-        { question: "kredi kartı ile ödeme yapabilir miyim", answer: "Evet, kredi kartı ile ödeme yapabilirsiniz." },
-        { question: "banka transferi mümkün mü", answer: "Evet, banka transferi ile ödeme seçeneğimiz mevcuttur." },
-        { question: "ödeme işlemleri nasıl gerçekleşiyor", answer: "Ödeme işlemleri SSL sertifikası ile güvence altındadır." },
-        { question: "indirimleriniz var mı", answer: "Belirli dönemlerde çeşitli indirim kampanyaları düzenlemekteyiz." },
-        { question: "fırsatlarınızı takip edebilir miyim", answer: "Web sitemizde güncel fırsatları bulabilirsiniz." },
-        { question: "ürün demo sunuyor musunuz", answer: "Evet, ürün demo taleplerinizi online form üzerinden iletebilirsiniz." },
-        { question: "deneme sürümü var mı", answer: "Belirli ürünlerimiz için deneme sürümü sunmaktayız." },
-        { question: "teknik dokümantasyon sağlıyor musunuz", answer: "Evet, tüm ürünlerimiz için detaylı teknik dokümantasyon mevcuttur." },
-        { question: "api desteğiniz var mı", answer: "Evet, API entegrasyon desteği sunmaktayız." },
-        { question: "kurulum desteği sağlıyor musunuz", answer: "Kurulum sürecinde destek ekibimiz size yardımcı olmaktadır." },
-        { question: "sistem entegrasyon hizmetiniz var mı", answer: "Evet, sistem entegrasyonu hizmetimiz bulunmaktadır." },
-        { question: "mobil uygulama geliştirme hizmetiniz nedir", answer: "Mobil uygulama geliştirme konusunda profesyonel çözümler sunuyoruz." },
-        { question: "e-ticaret çözümleriniz var mı", answer: "Evet, e-ticaret için kapsamlı çözümler sunmaktayız." },
-        { question: "seo hizmetleriniz nelerdir", answer: "SEO ve dijital pazarlama konularında destek sağlamaktayız." },
-        { question: "sosyal medya yönetimi yapıyor musunuz", answer: "Evet, sosyal medya yönetimi hizmetlerimiz mevcuttur." },
-        { question: "dijital reklamcılık hizmeti sunuyor musunuz", answer: "Dijital reklamcılık hizmetlerimiz bulunmaktadır." },
-        { question: "marka danışmanlığı veriyor musunuz", answer: "Evet, marka ve imaj danışmanlığı hizmeti sunuyoruz." },
-        { question: "web analitik hizmetiniz nedir", answer: "Web analitik çözümlerimiz ile performans ölçümü yapabilirsiniz." },
-        { question: "veri analizi yapıyor musunuz", answer: "Büyük veri analizi hizmetimiz mevcuttur." },
-        { question: "raporlama hizmeti sağlıyor musunuz", answer: "Evet, düzenli raporlama hizmeti sunmaktayız." },
-        { question: "bulut tabanlı hizmetleriniz var mı", answer: "Evet, bulut tabanlı çözümlerimiz mevcuttur." },
-        { question: "sanal sunucu hizmeti sağlıyor musunuz", answer: "Evet, sanal sunucu hizmetimiz bulunmaktadır." },
-        { question: "veri yedekleme hizmetiniz nedir", answer: "Veri yedekleme çözümlerimiz ile bilgilerinizi koruyoruz." },
-        { question: "acil durum destek hattınız var mı", answer: "7/24 acil destek hattımız mevcuttur." },
-        { question: "destek taleplerini nasıl takip edebilirim", answer: "Online destek sistemimiz üzerinden taleplerinizi takip edebilirsiniz." },
-        { question: "sorun giderme süreniz nedir", answer: "Genellikle 24 saat içerisinde sorunları çözmeye çalışıyoruz." },
-        { question: "servis sözleşmesi imzalanıyor mu", answer: "Evet, servis sözleşmeleri ile çalışmaktayız." },
-        { question: "şirketinizin ar-ge faaliyetleri nelerdir", answer: "Ar-Ge ekibimiz yeni teknolojiler geliştirmek için çalışmaktadır." },
-        { question: "yeni projeleriniz nelerdir", answer: "Yakın zamanda yeni projelerimizi duyurmayı planlıyoruz." },
-        { question: "sürdürülebilirlik politikalarınız nedir", answer: "Sürdürülebilirlik, şirketimizin temel önceliklerindendir." },
-        { question: "çevre dostu teknolojiler kullanıyor musunuz", answer: "Evet, çevre dostu teknolojiler geliştiriyoruz." },
-        { question: "yenilikçi çözümler sunuyor musunuz", answer: "Evet, sürekli yenilikçi çözümler üretiyoruz." },
-        { question: "müşteri memnuniyetini nasıl sağlıyorsunuz", answer: "Müşteri geri bildirimlerini ön planda tutuyoruz." },
-        { question: "şirket içi eğitim programlarınız var mı", answer: "Evet, çalışanlarımız için düzenli eğitim programları düzenliyoruz." },
-        { question: "iş geliştirme stratejileriniz nelerdir", answer: "Stratejik planlarımızla sürekli büyümeye odaklanıyoruz." },
-        { question: "yıllık cirolarınız nedir", answer: "Finansal bilgilerimiz kamuya açık olmamakla birlikte, büyümemiz sürekli artmaktadır." },
-        { question: "borsa ile ilişkili misiniz", answer: "Şu anda borsada işlem görmüyoruz." },
-        { question: "hissedar bilgilendirmesi yapıyor musunuz", answer: "Evet, düzenli olarak hissedar bilgilendirmesi yapmaktayız." },
-        { question: "şirketinize yatırım yapmak ister misiniz", answer: "Yatırımcı ilişkileri departmanımız ile iletişime geçebilirsiniz." },
-        { question: "kurumsal kimlik çalışmaları yapıyor musunuz", answer: "Evet, kurumsal kimlik oluşturma hizmeti sunmaktayız." },
-        { question: "reklam kampanyalarınız nelerdir", answer: "Çeşitli reklam kampanyaları düzenlemekteyiz." },
-        { question: "etkinlikleriniz var mı", answer: "Evet, belirli dönemlerde etkinlikler düzenliyoruz." },
-        { question: "ürün lansmanlarınız nasıl gerçekleşiyor", answer: "Ürün lansmanlarımız kapsamlı tanıtım faaliyetleriyle destekleniyor." },
-        { question: "canlı destek hattınız var mı", answer: "Evet, canlı destek hattımız 7/24 hizmet vermektedir." },
-        { question: "e-posta desteği sağlıyor musunuz", answer: "Evet, e-posta üzerinden de destek sunuyoruz." },
-        { question: "telefon desteği veriyor musunuz", answer: "Evet, telefon desteğimiz mevcuttur." },
-        { question: "canlı sohbet desteği sunuyor musunuz", answer: "Web sitemiz üzerinden canlı sohbet desteği bulunmaktadır." },
-        { question: "çalışma saatleriniz nedir", answer: "Hafta içi 09:00-18:00 saatleri arasında çalışmaktayız." },
-        { question: "resmi tatil günleriniz nelerdir", answer: "Resmi tatillerde destek hizmetimiz sınırlı olabilmektedir." },
-        { question: "şirket içi etkinlikler düzenliyor musunuz", answer: "Evet, düzenli olarak şirket içi etkinlikler organize ediyoruz." },
-        { question: "çalışan sayınız nedir", answer: "Şirketimizde yaklaşık 200 çalışanımız bulunmaktadır." },
-        { question: "global iş ortaklarınız var mı", answer: "Evet, uluslararası iş ortaklıklarımız mevcuttur." },
-        { question: "yurtdışı ofisleriniz var mı", answer: "Şu anda yurtdışı ofisimiz bulunmamaktadır." },
-        { question: "ürünlerinizi nasıl test ediyorsunuz", answer: "Ürün test süreçlerimiz sıkı kalite kontrollerine tabidir." },
-        { question: "ürünlerin garanti süresi nedir", answer: "Garanti süresi ürün tipine göre değişiklik göstermektedir." },
-        { question: "hizmetlerinizi güncelliyor musunuz", answer: "Evet, sürekli olarak hizmetlerimizi geliştiriyoruz." },
-        { question: "müşteri destek yazılımınız nedir", answer: "Kendi geliştirdiğimiz destek yazılımını kullanıyoruz." },
-        { question: "teknik servis ekibiniz var mı", answer: "Evet, teknik servis ekibimiz her zaman destek vermeye hazırdır." },
-        { question: "soru cevap sisteminiz otomatik mi", answer: "Evet, sistemimiz otomatik olarak soruları analiz eder." },
-        { question: "kullanıcı verilerini nasıl koruyorsunuz", answer: "Veri güvenliği bizim için en önemli önceliktir." },
-        { question: "kullanıcı gizliliği politikalarınız nelerdir", answer: "Gizlilik politikamız, kullanıcı verilerini korumaya yöneliktir." },
-        { question: "veri şifreleme yöntemleriniz nelerdir", answer: "En son şifreleme teknolojilerini kullanmaktayız." },
-        { question: "ssl sertifikası kullanıyor musunuz", answer: "Evet, web sitemiz SSL sertifikası ile korunmaktadır." },
-        { question: "sistem kesintisi yaşanır mı", answer: "Planlı bakım dışında kesinti yaşanmamaktadır." },
-        { question: "güncelleme sıklığınız nedir", answer: "Yazılım ve sistem güncellemeleri düzenli olarak yapılmaktadır." },
-        { question: "yeni ürün geliştirme süreciniz nedir", answer: "Yeni ürünlerimiz kapsamlı Ar-Ge süreçleriyle geliştirilmektedir." },
-        { question: "rakip analizleri yapıyor musunuz", answer: "Evet, sektördeki rakiplerimizi yakından takip ediyoruz." },
-        { question: "pazar araştırması yapıyor musunuz", answer: "Düzenli olarak pazar araştırmaları gerçekleştiriyoruz." },
-        { question: "çalışma kültürünüz nasıldır", answer: "Açık iletişim ve takım çalışması odaklı bir kültüre sahibiz." },
-        { question: "şirket değerleriniz nelerdir", answer: "İnovasyon, müşteri odaklılık ve dürüstlük temel değerlerimizdir." },
-        { question: "kurumsal sosyal sorumluluk projeleriniz var mı", answer: "Evet, çeşitli sosyal sorumluluk projeleri yürütüyoruz." },
-        { question: "yerel topluluklara destek veriyor musunuz", answer: "Evet, yerel topluluk projelerine destek vermekteyiz." },
-        { question: "iş ortaklarınızdan memnun musunuz", answer: "İş ortaklarımızla güçlü ilişkiler kurmaktayız." },
-        { question: "şirketiniz ödül kazandı mı", answer: "Evet, sektörde birçok ödül aldık." },
-        { question: "basında yer aldınız mı", answer: "Evet, çeşitli medya kuruluşlarında yer aldık." },
-        { question: "ürün sertifikalarınız var mı", answer: "Evet, ürünlerimiz çeşitli sertifikalara sahiptir." },
-        { question: "kalite standartlarınız nelerdir", answer: "Uluslararası kalite standartlarına uygunuz." },
-        { question: "müşteri geri dönüşlerini önemsiyor musunuz", answer: "Evet, her geri dönüş bizim için değerlidir." },
-        { question: "iade süreciniz nasıl işliyor", answer: "İade talepleri belirlenen prosedürlere göre işlenir." },
-        { question: "değişim garantisi sunuyor musunuz", answer: "Evet, belirli ürünlerde değişim garantisi sunuyoruz." },
-        { question: "sipariş takibi nasıl yapılır", answer: "Sipariş durumunuzu online olarak takip edebilirsiniz." },
-        { question: "fatura işlemleri nasıl yapılıyor", answer: "Fatura işlemleri sistemimiz üzerinden otomatik gerçekleştirilir." },
-        { question: "vergi bilgileriniz nelerdir", answer: "Vergi bilgilerimiz resmi belgelerle desteklenmektedir." },
-        { question: "kurumsal kimlik çalışmalarınız nelerdir", answer: "Kurumsal kimlik oluşturma sürecimiz titizlikle yürütülmektedir." },
-        { question: "iş geliştirme stratejiniz nedir", answer: "Stratejik planlamalarımızla sürekli büyümeyi hedefliyoruz." },
-        { question: "ar-ge yatırımlarınız nedir", answer: "Ar-Ge yatırımlarımız, şirketimizin geleceği için büyük önem taşır." },
-        { question: "teknoloji trendlerini yakından takip ediyor musunuz", answer: "Evet, sektörün en son trendlerini yakından izliyoruz." },
-        { question: "uluslararası iş birlikleriniz var mı", answer: "Evet, uluslararası iş birliklerimiz bulunmaktadır." },
-        { question: "müşteri memnuniyeti anketleri yapıyor musunuz", answer: "Evet, düzenli olarak memnuniyet anketleri gerçekleştiriyoruz." },
-        { question: "ürün eğitimleri veriyor musunuz", answer: "Kullanıcılarımıza yönelik ürün eğitimleri düzenliyoruz." },
-        { question: "yazılım geliştirme süreçleriniz nelerdir", answer: "Agile metodolojiyi benimseyerek çalışıyoruz." },
-        { question: "proje yönetim araçları kullanıyor musunuz", answer: "Evet, modern proje yönetim araçları kullanmaktayız." },
-        { question: "yenilikçi fikirlere açık mısınız", answer: "Evet, inovatif fikirlere her zaman açığız." },
-        { question: "müşteri desteği nasıl sağlanır", answer: "7/24 destek hattımız mevcuttur." },
-        { question: "sistem entegrasyonu nasıl gerçekleşiyor", answer: "Uzman ekibimiz entegrasyon sürecinde yanınızda." },
-        { question: "mobil ödeme seçenekleri nelerdir", answer: "Mobil ödeme seçeneklerimiz mevcuttur." },
-        { question: "uygulama performansı nasıl ölçülür", answer: "Performans ölçümleri düzenli olarak yapılmaktadır." },
-        { question: "yapay zeka çözümleri sunuyor musunuz", answer: "Evet, yapay zeka destekli çözümler üretiyoruz." },
-        { question: "sanal gerçeklik projeleriniz var mı", answer: "Evet, sanal gerçeklik projelerimiz üzerinde çalışıyoruz." },
-        { question: "artırılmış gerçeklik uygulamalarınız var mı", answer: "Evet, artırılmış gerçeklik uygulamaları geliştirmekteyiz." },
-        { question: "eğitim teknolojileri sunuyor musunuz", answer: "Evet, eğitim teknolojileri çözümlerimiz mevcuttur." },
-        { question: "dijital dönüşüm nasıl gerçekleşir", answer: "Dijital dönüşüm stratejilerimiz ile destek sağlıyoruz." },
-        { question: "iş zekası çözümleriniz nelerdir", answer: "İş zekası platformlarımız ile verilerinizi analiz edebilirsiniz." },
-        { question: "veri görselleştirme araçlarınız var mı", answer: "Evet, veri görselleştirme araçları sunmaktayız." },
-        { question: "siber saldırılara karşı önlemleriniz nelerdir", answer: "Gelişmiş güvenlik sistemleri ile korunuyoruz." },
-        { question: "müşteri verileri nasıl saklanıyor", answer: "Verilerimiz yüksek güvenlik standartlarında saklanmaktadır." },
-        { question: "bulut bilişim hizmetleriniz nelerdir", answer: "Evet, bulut bilişim çözümlerimiz mevcuttur." },
-        { question: "şirket içi iletişimi nasıl sağlıyorsunuz", answer: "Dijital iletişim araçları ile etkin iletişim sağlıyoruz." },
-        { question: "uzaktan çalışma politikalarınız nedir", answer: "Esnek uzaktan çalışma politikalarımız bulunmaktadır." },
-        { question: "şirket kültürünüz nasıl", answer: "Açık ve yenilikçi bir kültüre sahibiz." },
-        { question: "çalışan motivasyonu nasıl artırılır", answer: "Motivasyonu artırmak için düzenli etkinlikler düzenliyoruz." },
-        { question: "yıllık hedefleriniz nelerdir", answer: "Hedeflerimiz sürekli büyüme ve inovasyon odaklıdır." },
-        { question: "kariyer fırsatları nelerdir", answer: "Kariyer fırsatları için kariyer sayfamızı ziyaret edebilirsiniz." },
-        { question: "staj programınız var mı", answer: "Evet, staj programlarımız mevcuttur." },
-        { question: "çalışma arkadaşlarınız nasıl", answer: "Takım çalışmasına önem veriyoruz." },
-        { question: "şirket içi ödüller veriyor musunuz", answer: "Evet, başarılı çalışanlarımızı ödüllendiriyoruz." },
-        { question: "iş arkadaşlarıyla etkinlikler düzenliyor musunuz", answer: "Evet, sosyal etkinliklerimiz bulunmaktadır." },
-        { question: "iş ortamı nasıl", answer: "İş ortamımız samimi ve profesyoneldir." },
-        { question: "şirket toplantılarınız ne sıklıkta", answer: "Haftalık ve aylık toplantılar düzenlemekteyiz." },
-        { question: "proje başarı oranınız nedir", answer: "Projelerimizin %95 başarı oranına sahibiz." },
-        { question: "yıllık müşteri memnuniyeti puanınız nedir", answer: "Müşteri memnuniyeti puanımız sürekli yüksek seyrediyor." },
-        { question: "hizmet süresi nedir", answer: "Hizmet süremiz ürün tipine göre değişiklik göstermektedir." },
-        { question: "teknik altyapınız nedir", answer: "En güncel teknolojik altyapıyı kullanıyoruz." },
-        { question: "servis kaliteniz nasıl ölçülüyor", answer: "Düzenli anketler ile kalite ölçümü yapıyoruz." },
-        { question: "iş sürekliliği planınız nedir", answer: "Kapsamlı iş sürekliliği planlarımız mevcuttur." },
-        { question: "veri merkezi lokasyonlarınız nerede", answer: "Veri merkezlerimiz Türkiye ve Avrupa’da yer almaktadır." },
-        { question: "güvenlik sertifikalarınız var mı", answer: "Evet, çeşitli güvenlik sertifikalarımız bulunmaktadır." },
-        { question: "yüksek erişilebilirlik sağlanıyor mu", answer: "Evet, sistemlerimiz yüksek erişilebilirlikle çalışmaktadır." },
-        { question: "yedekleme çözümleriniz nedir", answer: "Veri yedekleme çözümlerimiz ile hizmet veriyoruz." },
-        { question: "acil müdahale süreniz nedir", answer: "Acil müdahale süremiz 1 saati geçmemektedir." },
-        { question: "müşteri destek kaliteniz nasıl ölçülüyor", answer: "Düzenli geri bildirimler ile ölçüm yapıyoruz." },
-        { question: "çözüm odaklı yaklaşımınız nedir", answer: "Sorunlara hızlı ve etkili çözümler üretiyoruz." },
-        { question: "inovasyon ekibiniz var mı", answer: "Evet, inovasyon ekibimiz sürekli yeni fikirler üretmektedir." },
-        { question: "teknoloji danışmanlığı hizmetiniz nedir", answer: "Evet, teknoloji danışmanlığı hizmeti sunuyoruz." },
-        { question: "veri güvenliği eğitimleri veriyor musunuz", answer: "Evet, düzenli olarak veri güvenliği eğitimleri düzenliyoruz." },
-        { question: "siber güvenlik denetimleri yapıyor musunuz", answer: "Evet, düzenli siber güvenlik denetimleri yapmaktayız." },
-        { question: "donanım ürünleriniz var mı", answer: "Evet, donanım ürünlerimiz de mevcuttur." },
-        { question: "yazılım ürünleriniz nelerdir", answer: "Çeşitli yazılım ürünleri sunmaktayız." },
-        { question: "e-ticaret platformunuz nedir", answer: "Kendi geliştirdiğimiz e-ticaret platformunu kullanıyoruz." },
-        { question: "kurumsal müşterilere özel hizmet var mı", answer: "Evet, kurumsal müşterilerimize özel çözümler sunuyoruz." },
-        { question: "sanal ofis hizmetiniz nedir", answer: "Evet, sanal ofis hizmetimiz de mevcuttur." },
-        { question: "veri merkezi hizmetleriniz nelerdir", answer: "Veri merkezi hizmetlerimiz kapsamlı çözümler sunar." },
-        { question: "girişimcilere destek veriyor musunuz", answer: "Evet, girişimcilere yönelik destek programlarımız bulunmaktadır." },
-        { question: "yeni teknolojilere adaptasyon nasıl sağlanıyor", answer: "Sürekli eğitim ve Ar-Ge çalışmaları ile adaptasyon sağlanıyor." },
-        { question: "teknoloji trend raporlarınız var mı", answer: "Evet, düzenli olarak trend raporları yayınlıyoruz." },
-        { question: "yazılım ve donanım entegrasyonu nasıl sağlanıyor", answer: "Uzman ekibimiz entegrasyon sürecinde yanınızda." },
-        { question: "kurumsal yazılım çözümleriniz nelerdir", answer: "Evet, kurumsal yazılım çözümleri sunmaktayız." },
-        { question: "fun teknoloji ile iletişim nasıl sağlanır", answer: "İletişim formumuz veya destek hattımız aracılığıyla bize ulaşabilirsiniz." }
-      ];
+          // Email sütunu (email alanının adını veritabanındaki sütun ismine göre değiştirin)
+          const emailTd = document.createElement('td');
+          emailTd.textContent = user.email || 'N/A';
+          tr.appendChild(emailTd);
 
-      // Yukarıdaki örnek 100’den fazla soru–cevap içeriyor.
-      // 200 adet veri elde etmek için aynı mantığı kullanarak listenizi genişletelim:
-      const additionalData = [
-        { question: "ödemeler güvenli mi", answer: "Ödeme işlemlerimiz en üst güvenlik standartlarına uygundur." },
-        { question: "kredi kartı ödemesi mümkün mü", answer: "Evet, kredi kartı ile ödeme yapabilirsiniz." },
-        { question: "banka havalesi nasıl yapılıyor", answer: "Banka havalesi seçeneğimiz mevcuttur." },
-        { question: "ödeme işlemleri SSL ile korunuyor mu", answer: "Evet, tüm ödemeler SSL sertifikası ile korunmaktadır." },
-        { question: "indirim kampanyalarınız var mı", answer: "Belirli dönemlerde cazip indirim kampanyaları düzenliyoruz." },
-        { question: "fırsatları nereden takip edebilirim", answer: "Web sitemizde ve sosyal medyada güncel fırsatları bulabilirsiniz." },
-        { question: "ürün demo sunuyor musunuz", answer: "Evet, online demo taleplerinizi iletebilirsiniz." },
-        { question: "deneme sürümü mevcut mu", answer: "Belirli ürünler için deneme sürümü sunuyoruz." },
-        { question: "teknik dokümantasyon sağlanıyor mu", answer: "Evet, ürünlerimiz için kapsamlı dokümantasyon mevcuttur." },
-        { question: "api entegrasyonu destekleniyor mu", answer: "Evet, API entegrasyonu desteğimiz bulunmaktadır." },
-        { question: "kurulum desteği veriliyor mu", answer: "Kurulum sırasında destek ekibimiz yanınızdadır." },
-        { question: "sistem entegrasyonu nasıl yapılıyor", answer: "Uzman ekibimiz sistem entegrasyonunu sağlıyor." },
-        { question: "mobil uygulama geliştirme süreci nasıl", answer: "Agile metodolojimizle hızlı ve verimli geliştiriyoruz." },
-        { question: "web sitesi tasarımınız modern mi", answer: "Evet, modern ve kullanıcı dostu tasarımlar sunuyoruz." },
-        { question: "e-ticaret için kapsamlı çözümler sunuyor musunuz", answer: "Evet, e-ticaret çözümlerimiz mevcuttur." },
-        { question: "seo ve dijital pazarlama hizmetiniz nedir", answer: "SEO ve dijital pazarlama hizmetleriyle destek sağlıyoruz." },
-        { question: "sosyal medya yönetimi yapıyor musunuz", answer: "Evet, sosyal medya hesaplarınız için profesyonel yönetim sağlıyoruz." },
-        { question: "dijital reklamcılık hizmetleriniz nasıl", answer: "Dijital reklamcılık konusunda çeşitli kampanyalar yürütüyoruz." },
-        { question: "marka danışmanlığı veriliyor mu", answer: "Evet, marka danışmanlığı hizmetimiz bulunmaktadır." },
-        { question: "web analitik hizmetiniz ile performans ölçümü yapılır mı", answer: "Evet, web analitik çözümlerimiz performans ölçümü yapar." },
-        { question: "veri analizi yapıyor musunuz", answer: "Büyük veri analiz çözümlerimizle destek sağlıyoruz." },
-        { question: "raporlama hizmetiniz nasıl", answer: "Düzenli raporlamalarla hizmet veriyoruz." },
-        { question: "bulut tabanlı çözümleriniz nelerdir", answer: "Evet, çeşitli bulut çözümleri sunmaktayız." },
-        { question: "sanal sunucu hizmetiniz nasıl", answer: "Sanal sunucu hizmetimizle esnek çözümler sağlıyoruz." },
-        { question: "veri yedekleme nasıl yapılıyor", answer: "Güvenli veri yedekleme çözümlerimiz mevcuttur." },
-        { question: "acil durum destek hattınız 7/24 mı", answer: "Evet, 7/24 acil durum desteğimiz bulunmaktadır." },
-        { question: "destek taleplerini nasıl takip edebilirim", answer: "Online sistemimizle destek taleplerinizi izleyebilirsiniz." },
-        { question: "sorun giderme süresi ne kadar", answer: "Genellikle 24 saat içinde sorunlar çözülür." },
-        { question: "servis sözleşmesi imzalanıyor mu", answer: "Evet, müşteriye özel servis sözleşmeleri uygulanır." },
-        { question: "şirketinizin ar-ge çalışmaları nasıl", answer: "Ar-Ge ekibimiz sürekli yenilik üzerinde çalışmaktadır." },
-        { question: "yeni projeleriniz neler", answer: "Yakında duyurulacak yeni projelerimiz var." },
-        { question: "sürdürülebilirlik politikalarınız nelerdir", answer: "Sürdürülebilirlik, iş yapış biçimimizin temelidir." },
-        { question: "çevre dostu teknolojiler kullanıyor musunuz", answer: "Evet, çevre dostu çözümler üretmekteyiz." },
-        { question: "yenilikçi çözümler üretiyor musunuz", answer: "Kesintisiz inovasyon ile çözümler sunuyoruz." },
-        { question: "müşteri memnuniyetini nasıl sağlıyorsunuz", answer: "Müşteri geri bildirimlerine büyük önem veriyoruz." },
-        { question: "şirket içi eğitim programlarınız var mı", answer: "Çalışanlarımız için düzenli eğitim programları uyguluyoruz." },
-        { question: "iş geliştirme stratejileriniz nelerdir", answer: "Stratejik planlarımızla sürekli büyümeyi hedefliyoruz." },
-        { question: "yıllık cirolarınız nasıl", answer: "Finansal detaylar kamuya açık olmasa da büyümemiz sürekli artıyor." },
-        { question: "borsa ile ilişkili misiniz", answer: "Şu anda borsa ile ilişkimizi sürdürmüyoruz." },
-        { question: "hissedar bilgilendirmesi nasıl yapılıyor", answer: "Düzenli olarak hissedar bilgilendirmesi gerçekleştiriyoruz." },
-        { question: "yatırım yapmak isteyenlere nasıl bilgi veriyorsunuz", answer: "Yatırımcı ilişkileri departmanımız detaylı bilgi sunar." },
-        { question: "kurumsal kimlik çalışmaları nasıl yürütülüyor", answer: "Titiz çalışmalarla kurumsal kimlik oluşturuyoruz." },
-        { question: "reklam kampanyalarınız nelerdir", answer: "Çeşitli dönemlerde reklam kampanyaları düzenliyoruz." },
-        { question: "etkinlikleriniz var mı", answer: "Evet, düzenli etkinliklerimiz bulunmaktadır." },
-        { question: "ürün lansmanlarınız nasıl", answer: "Ürün lansmanlarımız kapsamlı tanıtımlarla desteklenmektedir." },
-        { question: "canlı destek hattınız 7/24 aktif mi", answer: "Evet, canlı destek hattımız 7/24 hizmet vermektedir." },
-        { question: "e-posta desteği sağlanıyor mu", answer: "Evet, e-posta ile destek sunmaktayız." },
-        { question: "telefon desteği veriliyor mu", answer: "Evet, telefon üzerinden destek hizmetimiz mevcuttur." },
-        { question: "canlı sohbet desteği mevcut mu", answer: "Web sitemiz üzerinden canlı sohbet desteğimiz vardır." },
-        { question: "çalışma saatleriniz nedir", answer: "Hafta içi 09:00-18:00 arası hizmet veriyoruz." },
-        { question: "resmi tatil günleriniz nelerdir", answer: "Resmi tatillerde hizmetimiz sınırlı olabilir." },
-        { question: "şirket içi etkinlikler düzenliyor musunuz", answer: "Evet, çalışanlarımız için etkinlikler organize ediyoruz." },
-        { question: "çalışan sayınız yaklaşık kaç", answer: "Şirketimizde yaklaşık 200 çalışan bulunmaktadır." },
-        { question: "global iş ortaklarınız var mı", answer: "Evet, uluslararası iş ortaklıklarımız mevcuttur." },
-        { question: "yurtdışı ofisleriniz bulunuyor mu", answer: "Şu anda yurtdışı ofisimiz bulunmamaktadır." },
-        { question: "ürün test süreçleriniz nasıl", answer: "Sıkı kalite kontrolleri ile ürün test süreçlerimiz yürütülür." },
-        { question: "ürünlerin garanti süresi nedir", answer: "Garanti süresi ürün tipine göre değişiklik göstermektedir." },
-        { question: "hizmetlerinizi sürekli güncelliyor musunuz", answer: "Evet, hizmetlerimizi sürekli geliştirmekteyiz." },
-        { question: "müşteri destek yazılımınız nedir", answer: "Kendi geliştirdiğimiz yazılımı kullanıyoruz." },
-        { question: "teknik servis ekibiniz hazır mı", answer: "Evet, teknik servis ekibimiz her zaman hizmetinizdedir." },
-        { question: "soru cevap sisteminiz otomatik çalışıyor mu", answer: "Evet, otomatik olarak soruları analiz ediyoruz." },
-        { question: "kullanıcı verilerini nasıl koruyorsunuz", answer: "Veri güvenliğine en üst düzeyde önem veriyoruz." },
-        { question: "kullanıcı gizliliği politikalarınız nelerdir", answer: "Kullanıcı verilerinin korunması için kapsamlı politikalarımız mevcuttur." },
-        { question: "veri şifreleme yöntemleriniz nelerdir", answer: "En güncel şifreleme teknolojilerini kullanıyoruz." },
-        { question: "ssl sertifikası kullanılıyor mu", answer: "Evet, tüm web trafiğimiz SSL ile korunmaktadır." },
-        { question: "sistem kesintisi yaşanıyor mu", answer: "Planlı bakım dışında kesinti yaşanmamaktadır." },
-        { question: "yazılım güncellemeleri ne sıklıkla yapılıyor", answer: "Güncellemeler düzenli olarak otomatik şekilde uygulanmaktadır." },
-        { question: "yeni ürün geliştirme süreciniz nasıl", answer: "Kapsamlı ar-ge süreçleriyle yeni ürünler geliştiriyoruz." },
-        { question: "rakip analizi yapılıyor mu", answer: "Evet, rakiplerimizi yakından takip ediyoruz." },
-        { question: "pazar araştırması yapılıyor mu", answer: "Evet, düzenli pazar araştırmaları gerçekleştiriyoruz." },
-        { question: "çalışma kültürünüz nasıldır", answer: "Açık iletişim ve takım çalışması esasımızdır." },
-        { question: "şirket değerleriniz nelerdir", answer: "İnovasyon, dürüstlük ve müşteri odaklılık temel değerlerimizdir." },
-        { question: "kurumsal sosyal sorumluluk projeleriniz var mı", answer: "Evet, çeşitli sosyal sorumluluk projeleri yürütmekteyiz." }
-      ];
+          // Eğer başka sütun eklemek isterseniz, buraya ekleyin
 
-      // conversationData ve additionalData toplamda 100+ öğe içeriyor.
-      // Aşağıda iki diziyi birleştirerek 200 adet veri elde ediyoruz:
-      const fullConversationData = conversationData.concat(additionalData);
-
-      // Eğer toplam öğe sayısı 200'den azsa, eksik öğeleri otomatik oluşturuyoruz.
-      while (fullConversationData.length < 200) {
-        let index = fullConversationData.length + 1;
-        fullConversationData.push({ 
-          question: "soru " + index, 
-          answer: "Cevap " + index + " - Fun Teknoloji ile ilgili genel bilgi." 
+          tbody.appendChild(tr);
         });
+      } catch (error) {
+        console.error("Kullanıcılar alınırken hata oluştu:", error);
       }
-
-      // Fonksiyon: Kullanıcının sorusuna en yakın eşleşmeyi arar
-      function findAnswer(query) {
-        query = query.toLowerCase();
-        for (let i = 0; i < fullConversationData.length; i++) {
-          if (query.indexOf(fullConversationData[i].question) !== -1) {
-            return fullConversationData[i].answer;
-          }
-        }
-        return "Üzgünüm, bu soruya henüz cevap verebilecek bilgiye sahip değilim.";
-      }
-
-      startButton.addEventListener('click', () => {
-        recognition.start();
-        resultPara.textContent = "Dinliyorum, lütfen sorunuzu sorun...";
-      });
-
-      recognition.addEventListener('result', (event) => {
-        const transcript = event.results[0][0].transcript;
-        resultPara.textContent = "Soru: " + transcript;
-        
-        // Soruyu arayıp cevap bulma
-        const answer = findAnswer(transcript);
-        speakText(answer);
-      });
-
-      recognition.addEventListener('error', (event) => {
-        resultPara.textContent = "Hata: " + event.error;
-      });
     }
 
-    // Metni sesli olarak okutma fonksiyonu
-    function speakText(text) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'tr-TR';
-      window.speechSynthesis.speak(utterance);
-    }
+    // Sayfa yüklendiğinde verileri çek
+    window.onload = fetchUsers;
   </script>
 </body>
 </html>
