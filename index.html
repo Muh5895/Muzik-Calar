@@ -1,68 +1,35 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <title>Kullanıcı Listesi</title>
-  <style>
-    table {
-      border-collapse: collapse;
-      width: 100%;
-    }
-    th, td {
-      padding: 8px 12px;
-      border: 1px solid #ccc;
-    }
-    th {
-      background-color: #eee;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Supabase API Keysiz Test</title>
 </head>
 <body>
-  <h1>Kullanıcı Listesi</h1>
-  <table id="usersTable">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Email</th>
-        <!-- Diğer sütunlar için başlık ekleyebilirsiniz -->
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Veriler burada listelenecek -->
-    </tbody>
-  </table>
+    <h1>Supabase Kullanıcı Listesi</h1>
+    <pre id="output">Veri yükleniyor...</pre>
 
-  <script>
-    async function fetchUsers() {
-      try {
-        const res = await fetch('/api/users');
-        const users = await res.json();
-        const tbody = document.querySelector('#usersTable tbody');
-        tbody.innerHTML = "";
-        users.forEach(user => {
-          const tr = document.createElement('tr');
+    <script>
+        async function fetchData() {
+            try {
+                const response = await fetch("https://hpokklmjsmsjfzbuqcdl.supabase.co/rest/v1/users", {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                });
 
-          // ID sütunu
-          const idTd = document.createElement('td');
-          idTd.textContent = user.id || 'N/A';
-          tr.appendChild(idTd);
+                if (!response.ok) {
+                    throw new Error(`Hata: ${response.status} - ${response.statusText}`);
+                }
 
-          // Email sütunu (email alanının adını veritabanındaki sütun ismine göre değiştirin)
-          const emailTd = document.createElement('td');
-          emailTd.textContent = user.email || 'N/A';
-          tr.appendChild(emailTd);
+                const data = await response.json();
+                document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById("output").textContent = "Hata: " + error.message;
+            }
+        }
 
-          // Eğer başka sütun eklemek isterseniz, buraya ekleyin
-
-          tbody.appendChild(tr);
-        });
-      } catch (error) {
-        console.error("Kullanıcılar alınırken hata oluştu:", error);
-      }
-    }
-
-    // Sayfa yüklendiğinde verileri çek
-    window.onload = fetchUsers;
-  </script>
+        fetchData();
+    </script>
 </body>
 </html>
