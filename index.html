@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Racing Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        canvas {
+            background: url('assets/track.png') no-repeat center center;
+            background-size: cover;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const car = new Image();
+        car.src = 'assets/car.png';
+        let carX = canvas.width / 2 - 25;
+        let carY = canvas.height - 100;
+        let speed = 5;
+        
+        const keys = {};
+        window.addEventListener('keydown', (e) => keys[e.key] = true);
+        window.addEventListener('keyup', (e) => keys[e.key] = false);
+
+        function update() {
+            if (keys['ArrowLeft'] && carX > 0) carX -= speed;
+            if (keys['ArrowRight'] && carX < canvas.width - 50) carX += speed;
+            if (keys['ArrowUp'] && carY > 0) carY -= speed;
+            if (keys['ArrowDown'] && carY < canvas.height - 100) carY += speed;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(car, carX, carY, 50, 100);
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        car.onload = () => {
+            gameLoop();
+        };
+    </script>
+</body>
+</html>
