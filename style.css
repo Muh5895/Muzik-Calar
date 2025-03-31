@@ -14,24 +14,9 @@ body {
   padding: 20px;
   border-radius: 10px;
   text-align: center;
-  width: 300px;
 }
 
-.player h1 {
-  margin-top: 0;
-}
-
-.info {
-  margin: 15px 0;
-}
-
-.controls {
-  display: flex;
-  justify-content: space-around;
-  margin: 15px 0;
-}
-
-.controls button {
+button {
   background-color: #444;
   border: none;
   padding: 10px 15px;
@@ -41,14 +26,6 @@ body {
   transition: background-color 0.3s ease;
 }
 
-.controls button:hover {
+button:hover {
   background-color: #555;
-}
-
-.volume-control {
-  margin-top: 10px;
-}
-
-#volume-slider {
-  width: 100%;
 }
